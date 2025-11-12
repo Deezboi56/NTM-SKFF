@@ -32,6 +32,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.List;
 
 public class CoreComponent extends BlockContainer {
@@ -55,7 +56,7 @@ public class CoreComponent extends BlockContainer {
         else if (this == ModBlocks.dfc_exchanger)
             MachineTooltip.addBoiler(tooltip);
         else if (this == ModBlocks.dfc_stabilizer)
-            tooltip.add(I18nUtil.resolveKey("tile.dfc_stabilizer.desc"));
+	        tooltip.addAll(Arrays.asList(I18nUtil.resolveKey("tile.dfc_stabilizer.desc").split("\\$")));
         super.addInformation(stack, player, tooltip, advanced);
     }
 
