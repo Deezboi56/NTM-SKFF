@@ -576,12 +576,12 @@ public class ModBlocks {
 	public static final Block steel_poles = new DecoSteelPoles(Material.IRON, "steel_poles").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(15.0F);
 	public static final Block pole_top = new DecoPoleTop(Material.IRON, "pole_top").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(15.0F);
 	public static final Block pole_satellite_receiver = new DecoPoleSatelliteReceiver(Material.IRON, "pole_satellite_receiver").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(15.0F);
-	public static final Block steel_wall = new DecoBlock(Material.IRON, "steel_wall").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(15.0F);
-	public static final Block steel_corner = new DecoBlock(Material.IRON, "steel_corner").setCreativeTab(MainRegistry.blockTab).setHardness(15.0F).setResistance(15.0F);
-	public static final Block steel_roof = new DecoBlock(Material.IRON, "steel_roof").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(15.0F);
+	public static final Block steel_wall = new DecoBlock(Material.IRON, "steel_wall").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(30.0F);
+	public static final Block steel_corner = new DecoBlock(Material.IRON, "steel_corner").setCreativeTab(MainRegistry.blockTab).setHardness(15.0F).setResistance(30.0F);
+	public static final Block steel_roof = new DecoBlock(Material.IRON, "steel_roof").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(30.0F);
 	public static final Block steel_beam = new DecoBlock(Material.IRON, "steel_beam").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(15.0F);
-	public static final Block steel_scaffold = new DecoBlock(Material.IRON, "steel_scaffold").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(15.0F);
-	public static final Block steel_grate = new BlockGrate(Material.IRON, "steel_grate").setSoundType(soundTypeGrate).setCreativeTab(MainRegistry.blockTab).setHardness(2.0F).setResistance(5.0F);
+	public static final Block steel_scaffold = new DecoBlock(Material.IRON, "steel_scaffold").setCreativeTab(MainRegistry.blockTab).setHardness(5.0F).setResistance(30.0F);
+	public static final Block steel_grate = new BlockGrate(Material.IRON, "steel_grate").setSoundType(soundTypeGrate).setCreativeTab(MainRegistry.blockTab).setHardness(2.0F).setResistance(15.0F);
 	
 	public static final Block deco_pipe = new BlockPipe(Material.IRON, "deco_pipe").setSoundType(soundTypeGrate).setCreativeTab(MainRegistry.blockTab).setHardness(2.0F).setResistance(5.0F);
 	public static final Block deco_pipe_rusted = new BlockPipe(Material.IRON, "deco_pipe_rusted").setSoundType(soundTypeGrate).setCreativeTab(MainRegistry.blockTab).setHardness(2.0F).setResistance(5.0F);

@@ -2,9 +2,8 @@ package com.leafia.contents.machines.panel.controltorch;
 
 import com.hbm.blocks.ModBlocks;
 import com.hbm.inventory.control_panel.*;
-import com.leafia.dev.LeafiaDebug;
+import com.leafia.passive.LeafiaPassiveServer;
 import net.minecraft.block.BlockTorch;
-import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -12,9 +11,15 @@ import net.minecraft.world.World;
 import java.util.*;
 
 public class ControlTorchTE extends TileEntity implements IControllable {
-	final boolean isOn;
+	boolean isOn;
+	boolean loadedByWorld;
 	ControlTorchTE(boolean isOn) {
 		this.isOn = isOn;
+		loadedByWorld = false;
+	}
+	public ControlTorchTE() {
+		isOn = false;
+		loadedByWorld = true;
 	}
 
 	@Override
@@ -33,7 +38,7 @@ public class ControlTorchTE extends TileEntity implements IControllable {
 	public void receiveEvent(BlockPos from,ControlEvent e) {
 		if (e.name.equals("torch_set_state")) {
 			boolean newState = e.vars.get("isOn").getNumber() >= 1f;
-			if (newState != isOn)
+			if (newState != isOn || loadedByWorld)
 				world.setBlockState(pos, (newState ? ModBlocks.control_torch : ModBlocks.control_torch_unlit).getDefaultState().withProperty(BlockTorch.FACING, world.getBlockState(pos).getValue(BlockTorch.FACING)), 3);
 		}
 	}
@@ -58,5 +63,11 @@ public class ControlTorchTE extends TileEntity implements IControllable {
 	public void validate() {
 		ControlEventSystem.get(world).addControllable(this);
 		super.validate();
+		if (loadedByWorld) {
+			LeafiaPassiveServer.queueFunction(()->{
+				isOn = world.getBlockState(pos).getBlock() == ModBlocks.control_torch;
+				loadedByWorld = false;
+			});
+		}
 	}
 }
