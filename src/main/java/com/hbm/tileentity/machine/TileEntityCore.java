@@ -440,7 +440,7 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						//Tracker._tracePosition(this,pos.down(5),"deltaSubEnergy: ",deltaSubEnergy);
 						//containedEnergy -= deltaSubEnergy*Math.pow(Math.max(0,1-energyRatio),0.25);
 
-						containedEnergy += collapsing*1_000_000;
+						containedEnergy += Math.pow(collapsing,4)*1_000_000;
 
 						containedEnergy = Math.min(containedEnergy,failsafeLevel);
 
