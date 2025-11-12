@@ -32,7 +32,9 @@ import com.hbm.forgefluid.ModFluidProperties;
 import com.hbm.forgefluid.ModForgeFluids;
 import com.hbm.handler.*;
 import com.hbm.handler.crt.NTMCraftTweaker;
+import com.hbm.hazard.HazardData;
 import com.hbm.hazard.HazardRegistry;
+import com.hbm.hazard.HazardSystem;
 import com.hbm.inventory.*;
 import com.hbm.inventory.control_panel.ControlEvent;
 import com.hbm.inventory.control_panel.ControlRegistry;
@@ -147,6 +149,7 @@ import net.minecraft.item.ItemArmor.ArmorMaterial;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Tuple;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.common.ForgeChunkManager.LoadingCallback;
@@ -161,10 +164,7 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraftforge.fml.common.registry.GameRegistry;
@@ -1439,4 +1439,8 @@ public class MainRegistry {
         });
 	}
 
+	@EventHandler
+	public void fMLLoadCompleteEvent(FMLLoadCompleteEvent evt){
+		proxy.onLoadComplete(evt);
+	}
 }

@@ -175,6 +175,12 @@ public class TileEntityCoreStabilizer extends DFCBaseTE implements ITickable, IE
         Map<String,DataValue> map = new HashMap<>();
         map.put("active",new DataValueFloat(isOn ? 1 : 0));
         map.put("level",new DataValueFloat(watts));
+        map.put("lens_health",new DataValueFloat(0));
+        ItemStack stack = inventory.getStackInSlot(0);
+        if (stack.getItem() instanceof ItemLens) {
+            ItemLens lens = (ItemLens) inventory.getStackInSlot(0).getItem();
+            map.put("lens_health",new DataValueFloat(100-ItemLens.getLensDamage(stack)*100/(float)lens.maxDamage));
+        }
         map.put("core_temp",new DataValueFloat(0));
         map.put("core_energy",new DataValueFloat(0));
         map.put("core_expel",new DataValueFloat(0));

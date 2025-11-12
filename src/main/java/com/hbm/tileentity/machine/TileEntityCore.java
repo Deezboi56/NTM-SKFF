@@ -361,7 +361,7 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 					if (f1s == null) f1 = ModForgeFluids.DEUTERIUM; else f1 = f1s.getFluid();
 					if (f2s == null) f2 = ModForgeFluids.TRITIUM; else f2 = f2s.getFluid();
 					double fill0 = tanks[0].getFluidAmount()/(double)tanks[0].getCapacity();
-					double fill1 = tanks[0].getFluidAmount()/(double)tanks[0].getCapacity();
+					double fill1 = tanks[1].getFluidAmount()/(double)tanks[1].getCapacity();
 					double fuelPower = ModFluidProperties.getDFCEfficiency(f1) * ModFluidProperties.getDFCEfficiency(f2);
 
 					double tempRatio = temperature/meltingPoint;

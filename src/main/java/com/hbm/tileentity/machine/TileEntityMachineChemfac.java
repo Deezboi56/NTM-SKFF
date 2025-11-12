@@ -1,6 +1,6 @@
 package com.hbm.tileentity.machine;
 
-import com.custom.TypedFluidTank;
+import com.custom_hbm.TypedFluidTank;
 import com.hbm.blocks.BlockDummyable;
 import com.hbm.forgefluid.FFUtils;
 import com.hbm.forgefluid.ModForgeFluids;

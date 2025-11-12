@@ -14,6 +14,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.registry.IRegistry;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
@@ -84,4 +85,5 @@ public class ServerProxy
 	public float getImpactFire(World world,int dimension) {
 		return (float)IdkWhereThisShitBelongs.getTomImpactLargest(world,"infernal",dimension);
 	}
+	public void onLoadComplete(FMLLoadCompleteEvent event){}
 }

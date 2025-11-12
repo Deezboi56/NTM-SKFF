@@ -1,4 +1,4 @@
-package com.custom;
+package com.custom_hbm;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.Fluid;

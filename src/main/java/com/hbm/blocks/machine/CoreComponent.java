@@ -8,6 +8,7 @@ import com.hbm.tileentity.machine.TileEntityCoreEmitter;
 import com.hbm.tileentity.machine.TileEntityCoreInjector;
 import com.hbm.tileentity.machine.TileEntityCoreReceiver;
 import com.hbm.tileentity.machine.TileEntityCoreStabilizer;
+import com.hbm.util.I18nUtil;
 import com.leafia.contents.machines.powercores.dfc.DFCBaseTE;
 import com.leafia.contents.machines.powercores.dfc.creativeemitter.TileEntityCoreCreativeEmitter;
 import com.leafia.contents.machines.powercores.dfc.exchanger.DFCExchangerTE;
@@ -53,6 +54,8 @@ public class CoreComponent extends BlockContainer {
             MachineTooltip.addGenerator(tooltip);
         else if (this == ModBlocks.dfc_exchanger)
             MachineTooltip.addBoiler(tooltip);
+        else if (this == ModBlocks.dfc_stabilizer)
+            tooltip.add(I18nUtil.resolveKey("tile.dfc_stabilizer.desc"));
         super.addInformation(stack, player, tooltip, advanced);
     }
 

@@ -4677,6 +4677,7 @@ tile.dfc_injector.name=DFC 燃料インジェクター
 tile.dfc_receiver.name=DFC アブソーバー
 tile.dfc_reinforced.name=DFC 強化アブソーバー
 tile.dfc_stabilizer.name=DFC スタビライザー
+tile.dfc_stabilizer.desc=接続が確立されている場合、コアのステータスを取得します。
 tile.digamma_matter.name=ディガンマリウム
 tile.dirt_dead.name=枯れた槌
 tile.dirt_oily.name=油染みた槌

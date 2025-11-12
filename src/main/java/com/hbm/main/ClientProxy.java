@@ -14,6 +14,7 @@ import com.hbm.items.ModItems.*;
 import com.hbm.particle.*;
 import com.hbm.render.item.*;
 import com.hbm.tileentity.network.TileEntityCraneSplitter;
+import com.hbm.util.Compat;
 import com.leafia.contents.machines.elevators.*;
 import com.leafia.contents.machines.elevators.car.ElevatorEntity;
 import com.leafia.contents.machines.elevators.car.ElevatorRender;
@@ -74,6 +75,9 @@ import com.hbm.tileentity.machine.*;
 import com.llib.exceptions.LeafiaDevFlaw;
 import net.minecraft.client.particle.*;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import org.apache.logging.log4j.Level;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -2484,4 +2488,10 @@ public class ClientProxy extends ServerProxy {
     public float getImpactFire(World world,int dimension) {
         return (float)IdkWhereThisShitBelongs.infernal;
     }
+
+	@Override
+	public void onLoadComplete(FMLLoadCompleteEvent event){
+		if (!FMLClientHandler.instance().hasOptifine()) ModEventHandlerClient.optifineWarning = true;
+		if (!Loader.isModLoaded("backups")) ModEventHandlerClient.backupsWarning = true;
+	}
 }

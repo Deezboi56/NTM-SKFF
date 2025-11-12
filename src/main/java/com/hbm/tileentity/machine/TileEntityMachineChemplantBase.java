@@ -1,7 +1,7 @@
 package com.hbm.tileentity.machine;
 
 import api.hbm.energy.IEnergyUser;
-import com.custom.TypedFluidTank;
+import com.custom_hbm.TypedFluidTank;
 import com.hbm.blocks.BlockDummyable;
 import com.hbm.inventory.ChemplantRecipes;
 import com.hbm.inventory.RecipesCommon.AStack;
@@ -20,7 +20,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;

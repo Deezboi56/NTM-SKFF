@@ -1,6 +1,7 @@
 package com.hbm.main;
 
 import baubles.api.BaublesApi;
+import com.custom_hbm.GuiCTMWarning;
 import com.google.common.collect.Queues;
 import com.google.gson.JsonSyntaxException;
 import com.hbm.blocks.ILookOverlay;
@@ -215,6 +216,27 @@ public class ModEventHandlerClient {
 
 	public static float deltaMouseX;
 	public static float deltaMouseY;
+	public static boolean optifineWarning = false;
+	public static boolean backupsWarning = false;
+	public static boolean seenWarning = false;
+	@SubscribeEvent
+	public void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
+		if (seenWarning) return;
+		if (!optifineWarning && !backupsWarning) return;
+		if (event.getGui() instanceof net.minecraft.client.gui.GuiMainMenu) {
+			if (optifineWarning)
+				GuiCTMWarning.text.add("Optifine is recommended as it magically fixes rendering stuff.");
+			if (backupsWarning) {
+				GuiCTMWarning.text.add("Backups is "+(optifineWarning ? "also" : "")+"recommended as the mod is highly unstable.");
+				GuiCTMWarning.downloadButtonIndex = GuiCTMWarning.text.size();
+				GuiCTMWarning.text.add("Click to download Backups");
+			}
+			GuiCTMWarning.text.add("");
+			GuiCTMWarning.text.add("Press any key to continue");
+			Minecraft.getMinecraft().displayGuiScreen(new GuiCTMWarning());
+			seenWarning = true;
+		}
+	}
 	
 	public static float currentFOV = 70;
 	public static MusicTicker.MusicType darkness;
