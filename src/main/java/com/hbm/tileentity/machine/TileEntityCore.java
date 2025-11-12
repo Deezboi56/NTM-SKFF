@@ -440,7 +440,7 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						//Tracker._tracePosition(this,pos.down(5),"deltaSubEnergy: ",deltaSubEnergy);
 						//containedEnergy -= deltaSubEnergy*Math.pow(Math.max(0,1-energyRatio),0.25);
 
-						containedEnergy += Math.pow(collapsing,4)*1_000_000;
+						containedEnergy += Math.max(Math.pow(collapsing,2)*1_500_000-addition0-addition1,0);
 
 						containedEnergy = Math.min(containedEnergy,failsafeLevel);
 
@@ -612,7 +612,7 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
 
 						ExplosionNT nt = new ExplosionNT(world,null,pos.getX()+0.5f, pos.getY()+0.5f, pos.getZ()+0.5f,50);
-						nt.maxExplosionResistance = 28;
+						nt.maxExplosionResistance = 20;
 						nt.iterationLimit = 150;
 						nt.ignoreBlockPoses.add(pos);
 						nt.explode();
