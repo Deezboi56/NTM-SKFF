@@ -134,7 +134,7 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 	public long explosionClock = 0;
 	public BlockPos jammerPos = null;
 	public static double failsafeLevel = 250000000;
-	public static double maxEnergy = 100_000; // 1PSPK or 5EHE
+	public static double maxEnergy = 10_000; // 100TSPK or 5EHE
 	public List<BlockPos> componentPositions = new ArrayList<>(); // for local rendering
 	public List<BlockPos> prevComponentPositions = new ArrayList<>(); // for local rendering
 
@@ -391,12 +391,14 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						//Tracker._tracePosition(this,pos.down(4),"potAbsorb: "+potAbsorb);
 						double boost = catalystPowerMod*energyMod;
 						double deltaEnergy = (Math.pow(Math.pow(incomingSpk, 0.666/2) + 1, 0.666/2) - 1) * 6.666 / 3 * Math.pow(1.2,potentialGain);
-						double addition0 = (deltaEnergy*corePower+Math.pow(Math.max(0,incomingSpk-deltaEnergy),0.9))*boost*fill0*fill1;
+						double addition0 = (deltaEnergy*corePower+Math.pow(Math.max(0,incomingSpk-deltaEnergy),0.9))*boost*fill0*fill1/666;
 						//containedEnergy += Math.pow(Math.min(temperature,10000)/100,1.2)*potentialRelease*boost*fill0*fill1;
-						double addition1 = Math.pow(Math.min(temperature,10000)/100,0.75)*corePower*potentialGain*boost*fill0*fill1*fuelPower/666 * Math.pow(0.9,potentialGain);
+						double addition1 = Math.pow(Math.min(temperature,10000)/100,0.75)*corePower*potentialGain*boost*fill0*fill1*fuelPower/20 * Math.pow(0.9,potentialGain);
 						addition0 = Math.max(addition0,0);
 						addition1 = Math.max(addition1,0);
 						containedEnergy = Math.min(Math.min(containedEnergy+addition0,failsafeLevel)+addition1,failsafeLevel);
+						LeafiaDebug.debugLog(world,"");
+						LeafiaDebug.debugLog(world,"Contained: "+containedEnergy);
 						//containedEnergy += Math.pow(Math.min(tempRatio,3),3)*100;
 						double tgtTemp = temperature;
 						//tgtTemp = Math.max(0,temperature-(1-energyRatio)*100*(Math.pow(tempRatio,2)+0.001));
@@ -416,9 +418,16 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						for (TileEntityCoreReceiver absorber : absorbers)
 							absorbDiv += absorber.level;
 
-						gainedEnergy = containedEnergy;
 
-						double absorbed = Math.pow(containedEnergy,0.75+energyRatio*0.25)/20*absorbDiv;
+						double collapseAddition = Math.pow(collapsing,2)*500_000;
+						containedEnergy += Math.max(collapseAddition-addition0-addition1,0);
+
+						containedEnergy = Math.min(containedEnergy,failsafeLevel);
+
+						gainedEnergy = containedEnergy;
+						LeafiaDebug.debugLog(world,"Contained 2: "+containedEnergy);
+
+						double absorbed = Math.pow(containedEnergy,0.75+0.25*(1-1/(1+absorbDiv)))*absorbDiv;
 						double transferred = 0;
 						for (TileEntityCoreReceiver absorber : absorbers) {
 							if (finalPhase) {
@@ -435,14 +444,11 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						expellingSpk = transferred;
 						expelTicks[Math.floorMod(ticks, 20)] = expellingSpk;
 						containedEnergy = Math.max(containedEnergy,0);
+						LeafiaDebug.debugLog(world,"Contained 3: "+containedEnergy);
 						double targetEnergy = Math.pow(containedEnergy,0.99);
 						//double deltaSubEnergy = containedEnergy-targetEnergy; what's the point??
 						//Tracker._tracePosition(this,pos.down(5),"deltaSubEnergy: ",deltaSubEnergy);
 						//containedEnergy -= deltaSubEnergy*Math.pow(Math.max(0,1-energyRatio),0.25);
-
-						containedEnergy += Math.max(Math.pow(collapsing,2)*1_500_000-addition0-addition1,0);
-
-						containedEnergy = Math.min(containedEnergy,failsafeLevel);
 
 						tgtTemp -= Math.max(0,Math.pow(temperature/meltingPoint,4)*temperature*getStabilizationDivAlt())*(0.5+(Math.pow(Math.abs(rdc),0.01)*Math.signum(rdc))/2);
 						tgtTemp = Math.min(Math.max(tgtTemp,0),5000000);
@@ -463,8 +469,8 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						expelTicks[Math.floorMod(ticks, 20)] = expelling;
 						 */
 						if (shockCooldown > 0) shockCooldown--;
-						double energyPerShock = 3_000_000*0.75;
-						if (containedEnergy >= 1_000_000*(world.rand.nextInt(150)+6.66)+0.5 && shockCooldown <= 0) {
+						double energyPerShock = 300_000*0.75;
+						if (containedEnergy >= 100_000*(world.rand.nextInt(150)+6.66)+0.5 && shockCooldown <= 0) {
 							double count = Math.ceil(containedEnergy/energyPerShock);
 							for (int i = 0; i < Math.pow(count,0.25); i++) shock();
 							world.playSound(null,pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5,HBMSoundEvents.mus_sfx_a_lithit,SoundCategory.BLOCKS,6.66f,1+(float)world.rand.nextGaussian()*0.1f);

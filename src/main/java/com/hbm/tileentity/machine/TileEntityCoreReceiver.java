@@ -135,7 +135,7 @@ public class TileEntityCoreReceiver extends DFCBaseTE implements ITickable, IEne
             core.absorbers.add(this);
         if (!world.isRemote) {
             LeafiaPacket._start(this).__write(31,targetPosition).__sendToAffectedClients();
-            if (joules >= NumScale.PETA && world.getBlockState(pos).getBlock() == ModBlocks.dfc_receiver) {
+            if (joules >= NumScale.GIGA*100L && world.getBlockState(pos).getBlock() == ModBlocks.dfc_receiver) {
                 destructionLevel = Math.min(destructionLevel+2,400);
                 if (destructionLevel > 300 && world.rand.nextInt(100) == 0) {
                     this.explode();
