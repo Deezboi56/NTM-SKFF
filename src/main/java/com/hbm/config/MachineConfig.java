@@ -1,6 +1,7 @@
 package com.hbm.config;
 
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fluids.Fluid;
 
 import java.util.HashSet;
@@ -48,7 +49,10 @@ public class MachineConfig {
 	public static int rbmkJumpTemp = 1250;
 
 	public static boolean chemplantKeepOilProcessing = false;
-	
+	public static int dfcComponentRange = 50;
+	public static boolean dfcInitialBlast = true;
+	public static boolean dfcFinalPhase = true;
+
 	public static boolean isFluidAllowed(Fluid f){
 		boolean isInList = blacklistedMixerFluids.contains(f.getName());
 		if(uuMixerFluidListIsWhitelist) return isInList;
@@ -105,5 +109,10 @@ public class MachineConfig {
 		rbmkJumpTemp = CommonConfig.createConfigInt(config, CATEGORY_MACHINE, generateConfigName(28, "rbmkJumpTemp"), "Controls at which rbmk column temperature the lid jumping begins. Can not be < 20°C. Set to > 1500°C to turn off. Default is 1250°C - <temp> (int)", 1250);
 		
 		chemplantKeepOilProcessing = CommonConfig.createConfigBool(config, CATEGORY_MACHINE, generateConfigName(29, "chemplantKeepOilProcessing"), "If false then the chemplant recipes processing Heavyoil, Industrial Oil, Naphtha, Light Oil will be removed. Otherwise not", false);
+
+		// DFC
+		dfcComponentRange = config.get(CATEGORY_MACHINE,"9.29000_DFC_componentRange",50).getInt();
+		dfcInitialBlast = !config.get(CATEGORY_MACHINE,"9.29010_DFC_disableInitialBlast",false).getBoolean();
+		dfcFinalPhase = !config.get(CATEGORY_MACHINE,"9.29011_DFC_disableFinalPhase",false).getBoolean();
 	}
 }

@@ -18,7 +18,9 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LeafiaGeneralLocal {
 	public static void injectDebugInfoLeft(List<String> list) {
@@ -52,25 +54,38 @@ public class LeafiaGeneralLocal {
 		}
 		return true;
 	}
-	public static void injectWackySplashes(List<String> splash) {
-		splash.add("Floppenheimer!");
-		splash.add("i should dip my balls in sulfuric acid");
-		splash.add("All answers are popbob!");
-		splash.add("None may enter The Orb!");
-		splash.add("Wacarb was here");
-		splash.add("SpongeBoy me Bob I am overdosing on keramine agagagagaga");
-		splash.add(TextFormatting.RED+I18nUtil.resolveKey("zzz.splash",System.getProperty("user.name")));
-		splash.add("Nice toes, now hand them over.");
-		splash.add("I smell burnt toast!");
-		splash.add("There are bugs under your skin!");
-		splash.add("Fentanyl!");
-		splash.add("Don't do drugs!");
-		splash.add("Imagine being scared by splash texts!");
-		splash.add("Redditors aren't people!");
-		splash.add("Can someone tell me what corrosive fumes the people on Reddit are huffing so I can avoid those more effectively?");
-		splash.add("Extra information on F3 debug screen! Did you know?");
-		splash.add("This mod sends string characters in just 5 bits!");
-		splash.add("zally jumpscare");
-		splash.add("Core game community nowadays is really toxic!");
+	static Map<String,String> splash = new HashMap<>();
+	static {
+		//https://www.ibm.com/docs/en/wamt?topic=binaries-jvm-command-line-properties-options
+		splash.put("en","I know where you live, %s.");
+		splash.put("es","Sé dónde vives, %s.");
+		splash.put("ja","お前の住処は知っている、%s。");
+		splash.put("ru","Я знаю, где ты живёшь, %s.");
+		splash.put("zh","我知道你的住处，%s。");
+	}
+	public static void injectWackySplashes(List<String> splashes) {
+		splashes.add("Floppenheimer!");
+		splashes.add("i should dip my balls in sulfuric acid");
+		splashes.add("All answers are popbob!");
+		splashes.add("None may enter The Orb!");
+		splashes.add("Wacarb was here");
+		splashes.add("SpongeBoy me Bob I am overdosing on keramine agagagagaga");
+		String lang = System.getProperty("user.language");
+		String spl = splash.get(lang);
+		if (spl == null) spl = splash.get("en");
+		splashes.add(TextFormatting.RED+spl.replace("%s",System.getProperty("user.name")));
+		splashes.add("Nice toes, now hand them over.");
+		splashes.add("I smell burnt toast!");
+		splashes.add("There are bugs under your skin!");
+		splashes.add("Fentanyl!");
+		splashes.add("Don't do drugs!"); // for legal reasons :)
+		splashes.add("Imagine being scared by splash texts!");
+		splashes.add("Redditors aren't people!");
+		splashes.add("Can someone tell me what corrosive fumes the people on Reddit are huffing so I can avoid those more effectively?");
+		// VV lce shit
+		splashes.add("Extra information on F3 debug screen!");
+		splashes.add("This mod sends string characters in just 5 bits!");
+		splashes.add("zally jumpscare");
+		splashes.add("Core game community nowadays is really toxic!");
 	}
 }

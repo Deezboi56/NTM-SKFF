@@ -1,16 +1,14 @@
 package com.leafia.contents.machines.powercores.dfc.exchanger;
 
+import com.hbm.config.MachineConfig;
 import com.hbm.forgefluid.FFUtils;
 import com.hbm.forgefluid.ModForgeFluids;
 import com.hbm.inventory.HeatRecipes;
 import com.hbm.items.machine.ItemForgeFluidIdentifier;
 import com.hbm.tileentity.IGUIProvider;
 import com.hbm.tileentity.machine.TileEntityCore;
-import com.hbm.util.Tuple.Pair;
 import com.hbm.util.Tuple.Quartet;
-import com.hbm.util.Tuple.Triplet;
 import com.leafia.contents.machines.powercores.dfc.DFCBaseTE;
-import com.leafia.dev.LeafiaDebug;
 import com.leafia.dev.container_utility.LeafiaPacket;
 import com.llib.group.LeafiaSet;
 import net.minecraft.client.gui.GuiScreen;
@@ -114,11 +112,10 @@ public class DFCExchangerTE extends DFCBaseTE implements ITickable, IGUIProvider
 		super(1);
 	}
 
-	public static final int range = 50;
 	int timer = 0;
 	@Override
 	public void update() {
-		TileEntityCore core = getCore(range);
+		TileEntityCore core = getCore(MachineConfig.dfcComponentRange);
 		if (!world.isRemote) {
 			LeafiaPacket._start(this).__write(31,targetPosition).__sendToAffectedClients();
 			timer++;

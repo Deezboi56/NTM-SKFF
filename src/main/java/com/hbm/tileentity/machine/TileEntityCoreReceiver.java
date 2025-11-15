@@ -2,6 +2,7 @@ package com.hbm.tileentity.machine;
 
 import api.hbm.energy.IEnergyGenerator;
 import com.hbm.blocks.ModBlocks;
+import com.hbm.config.MachineConfig;
 import com.hbm.explosion.ExplosionLarge;
 import com.hbm.forgefluid.ModForgeFluids;
 import com.hbm.interfaces.ILaserable;
@@ -12,7 +13,6 @@ import com.hbm.util.Tuple.Pair;
 import com.leafia.contents.machines.powercores.dfc.DFCBaseTE;
 import com.leafia.contents.machines.powercores.dfc.debris.AbsorberShrapnelEntity;
 import com.leafia.contents.machines.powercores.dfc.debris.AbsorberShrapnelEntity.DebrisType;
-import com.leafia.dev.LeafiaDebug;
 import com.leafia.dev.container_utility.LeafiaPacket;
 import com.llib.LeafiaLib.NumScale;
 import com.leafia.dev.math.FiaMatrix;
@@ -130,7 +130,7 @@ public class TileEntityCoreReceiver extends DFCBaseTE implements ITickable, IEne
 			}
 			if (!world.getBlockState(offs).getMaterial().isReplaceable()) break;
 		}*/
-        core = getCore(TileEntityCoreEmitter.range);
+        core = getCore(MachineConfig.dfcComponentRange);
         if (core != null)
             core.absorbers.add(this);
         if (!world.isRemote) {

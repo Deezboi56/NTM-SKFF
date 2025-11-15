@@ -47,6 +47,9 @@ public class BombConfig {
 	public static int limitExplosionLifespan = 0;
 	public static boolean disableNuclear = false;
 	public static boolean enableNukeClouds = true;
+
+	public static float blurMultiplier = 1;
+	public static float bloomMultiplier = 1;
 	
 	public static void loadFromConfig(Configuration config) {
 		final String CATEGORY_NUKES = "03_nukes";
@@ -187,6 +190,12 @@ public class BombConfig {
 		disableNuclear = disableNuclearP.getBoolean();
 
 		enableNukeClouds = config.get(CATEGORY_NUKE, "6.07_enableMushroomClouds", true).getBoolean(true);
-		
+
+		Property blurMul = config.get(CATEGORY_NUKE,"6.07000_blurMultiplier",1);
+		blurMul.setComment("Multiplier of blur shader of explosions.");
+		blurMultiplier = (float)blurMul.getDouble(1);
+		Property bloomMul = config.get(CATEGORY_NUKE,"6.07001_bloomMultiplier",1);
+		bloomMul.setComment("Multiplier of bloom shader of explosions.");
+		bloomMultiplier = (float)bloomMul.getDouble(1);
 	}
 }

@@ -1,6 +1,7 @@
 package com.hbm.tileentity.machine;
 
 import api.hbm.energy.IEnergyUser;
+import com.hbm.config.MachineConfig;
 import com.hbm.forgefluid.ModForgeFluids;
 import com.hbm.interfaces.ILaserable;
 import com.hbm.interfaces.ITankPacketAcceptor;
@@ -9,7 +10,6 @@ import com.hbm.lib.ForgeDirection;
 import com.hbm.lib.Library;
 import com.hbm.lib.ModDamageSource;
 import com.leafia.contents.machines.powercores.dfc.DFCBaseTE;
-import com.leafia.dev.LeafiaDebug;
 import com.leafia.dev.LeafiaUtil;
 import com.leafia.dev.container_utility.LeafiaPacket;
 import li.cil.oc.api.machine.Arguments;
@@ -54,15 +54,13 @@ public class TileEntityCoreEmitter extends DFCBaseTE implements ITickable, IEner
 	public long prev;
 	public int prevWatts = -1;
 
-	public static final int range = 50;
-
 	public TileEntityCoreEmitter() {
 		super(0);
 		tank = new FluidTank(64000);
 	}
 
 	public RayTraceResult raycast(long out) {
-		return Library.leafiaRayTraceBlocksCustom(world, new Vec3d(pos).add(0.5, 0.5, 0.5), new Vec3d(pos).add(0.5, 0.5, 0.5).add(getDirection().scale(range)), (process, config, current) -> {
+		return Library.leafiaRayTraceBlocksCustom(world, new Vec3d(pos).add(0.5, 0.5, 0.5), new Vec3d(pos).add(0.5, 0.5, 0.5).add(getDirection().scale(MachineConfig.dfcComponentRange)), (process,config,current) -> {
 			if (!world.isRemote) {
 				Vec3d centerVec = current.posIntended.add(new Vec3d(config.pivotAxisFace.getDirectionVec()).scale(0.5)
 						.add(config.secondaryVector.scale(0.5)));

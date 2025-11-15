@@ -8,7 +8,6 @@ import com.leafia.transformer.WorldServerLeafia;
 import com.llib.exceptions.LeafiaDevFlaw;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.world.biome.Biome;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -102,7 +101,7 @@ public class TransformerCoreLeafia implements IClassTransformer {
 		System.out.println("#Leaf: Transform End: " + name);
 		return classBeingTransformed;
 	}
-	static final Map<String,String> furtherDeobf = new HashMap<>();
+	static final Map<String,String> srgNames = new HashMap<>();
 	static final Map<Integer,String> opcodeMap = new HashMap<>();
 	static {
 		for (Field field : Opcodes.class.getFields()) {
@@ -113,135 +112,135 @@ public class TransformerCoreLeafia implements IClassTransformer {
 		}
 		//furtherDeobf.put();
 		{
-			furtherDeobf.put("func_179082_a","clearColor");
-			furtherDeobf.put("func_179083_b","viewport");
-			furtherDeobf.put("func_179084_k","disableBlend");
-			furtherDeobf.put("func_179085_a","enableLight");
-			furtherDeobf.put("func_179086_m","clear");
-			furtherDeobf.put("func_179087_a","enableTexGenCoord");
-			furtherDeobf.put("func_179088_q","enablePolygonOffset");
-			furtherDeobf.put("func_179089_o","enableCull");
-			furtherDeobf.put("func_179090_x","disableTexture2D");
-			furtherDeobf.put("func_179091_B","enableRescaleNormal");
-			furtherDeobf.put("func_179092_a","alphaFunc");
-			furtherDeobf.put("func_179093_d","setFog");
-			furtherDeobf.put("func_179094_E","pushMatrix");
-			furtherDeobf.put("func_179095_a","setFogDensity");
-			furtherDeobf.put("func_179096_D","loadIdentity");
-			furtherDeobf.put("func_179097_i","disableDepth");
-			furtherDeobf.put("func_179098_w","enableTexture2D");
-			furtherDeobf.put("func_179099_b","popAttrib");
-			furtherDeobf.put("func_179100_b","disableTexGenCoord");
-			furtherDeobf.put("func_179101_C","disableRescaleNormal");
-			furtherDeobf.put("func_179102_b","setFogStart");
-			furtherDeobf.put("func_179103_j","shadeModel");
-			furtherDeobf.put("func_179104_a","colorMaterial");
-			furtherDeobf.put("func_179105_a","texGen");
-			furtherDeobf.put("func_179106_n","disableFog");
-			furtherDeobf.put("func_179107_e","cullFace");
-			furtherDeobf.put("func_179108_z","enableNormalize");
-			furtherDeobf.put("func_179109_b","translate");
-			furtherDeobf.put("func_179110_a","multMatrix");
-			furtherDeobf.put("func_179111_a","getFloat");
+			srgNames.put("func_179082_a","clearColor");
+			srgNames.put("func_179083_b","viewport");
+			srgNames.put("func_179084_k","disableBlend");
+			srgNames.put("func_179085_a","enableLight");
+			srgNames.put("func_179086_m","clear");
+			srgNames.put("func_179087_a","enableTexGenCoord");
+			srgNames.put("func_179088_q","enablePolygonOffset");
+			srgNames.put("func_179089_o","enableCull");
+			srgNames.put("func_179090_x","disableTexture2D");
+			srgNames.put("func_179091_B","enableRescaleNormal");
+			srgNames.put("func_179092_a","alphaFunc");
+			srgNames.put("func_179093_d","setFog");
+			srgNames.put("func_179094_E","pushMatrix");
+			srgNames.put("func_179095_a","setFogDensity");
+			srgNames.put("func_179096_D","loadIdentity");
+			srgNames.put("func_179097_i","disableDepth");
+			srgNames.put("func_179098_w","enableTexture2D");
+			srgNames.put("func_179099_b","popAttrib");
+			srgNames.put("func_179100_b","disableTexGenCoord");
+			srgNames.put("func_179101_C","disableRescaleNormal");
+			srgNames.put("func_179102_b","setFogStart");
+			srgNames.put("func_179103_j","shadeModel");
+			srgNames.put("func_179104_a","colorMaterial");
+			srgNames.put("func_179105_a","texGen");
+			srgNames.put("func_179106_n","disableFog");
+			srgNames.put("func_179107_e","cullFace");
+			srgNames.put("func_179108_z","enableNormalize");
+			srgNames.put("func_179109_b","translate");
+			srgNames.put("func_179110_a","multMatrix");
+			srgNames.put("func_179111_a","getFloat");
 			//furtherDeobf.put("func_179112_b","blendFunc");
-			furtherDeobf.put("func_179113_r","disablePolygonOffset");
-			furtherDeobf.put("func_179114_b","rotate");
-			furtherDeobf.put("func_179115_u","enableColorLogic");
-			furtherDeobf.put("func_179116_f","colorLogicOp");
-			furtherDeobf.put("func_179117_G","resetColor");
-			furtherDeobf.put("func_179118_c","disableAlpha");
-			furtherDeobf.put("func_179119_h","disableColorMaterial");
+			srgNames.put("func_179113_r","disablePolygonOffset");
+			srgNames.put("func_179114_b","rotate");
+			srgNames.put("func_179115_u","enableColorLogic");
+			srgNames.put("func_179116_f","colorLogicOp");
+			srgNames.put("func_179117_G","resetColor");
+			srgNames.put("func_179118_c","disableAlpha");
+			srgNames.put("func_179119_h","disableColorMaterial");
 			//furtherDeobf.put("func_179120_a","tryBlendFuncSeparate");
-			furtherDeobf.put("func_179121_F","popMatrix");
-			furtherDeobf.put("func_179122_b","disableLight");
-			furtherDeobf.put("func_179123_a","pushAttrib");
-			furtherDeobf.put("func_179124_c","color");
-			furtherDeobf.put("func_179125_c","texGenCoord");
-			furtherDeobf.put("func_179126_j","enableDepth");
-			furtherDeobf.put("func_179127_m","enableFog");
-			furtherDeobf.put("func_179128_n","matrixMode");
-			furtherDeobf.put("func_179129_p","disableCull");
-			furtherDeobf.put("func_179130_a","ortho");
-			furtherDeobf.put("func_179131_c","color");
-			furtherDeobf.put("func_179132_a","depthMask");
-			furtherDeobf.put("func_179133_A","disableNormalize");
-			furtherDeobf.put("func_179134_v","disableColorLogic");
-			furtherDeobf.put("func_179135_a","colorMask");
-			furtherDeobf.put("func_179136_a","doPolygonOffset");
-			furtherDeobf.put("func_179137_b","translate");
-			furtherDeobf.put("func_179138_g","setActiveTexture");
-			furtherDeobf.put("func_179139_a","scale");
-			furtherDeobf.put("func_179140_f","disableLighting");
-			furtherDeobf.put("func_179141_d","enableAlpha");
-			furtherDeobf.put("func_179142_g","enableColorMaterial");
-			furtherDeobf.put("func_179143_c","depthFunc");
-			furtherDeobf.put("func_179144_i","bindTexture");
-			furtherDeobf.put("func_179145_e","enableLighting");
-			furtherDeobf.put("func_179146_y","generateTexture");
-			furtherDeobf.put("func_179147_l","enableBlend");
-			furtherDeobf.put("func_179148_o","callList");
-			furtherDeobf.put("func_179149_a","texGen");
-			furtherDeobf.put("func_179150_h","deleteTexture");
-			furtherDeobf.put("func_179151_a","clearDepth");
-			furtherDeobf.put("func_179152_a","scale");
-			furtherDeobf.put("func_179153_c","setFogEnd");
-			furtherDeobf.put("func_179198_a","setDisabled");
-			furtherDeobf.put("func_179199_a","setState");
-			furtherDeobf.put("func_179200_b","setEnabled");
-			furtherDeobf.put("func_187402_b","glFog");
-			furtherDeobf.put("func_187412_c","glFogi");
+			srgNames.put("func_179121_F","popMatrix");
+			srgNames.put("func_179122_b","disableLight");
+			srgNames.put("func_179123_a","pushAttrib");
+			srgNames.put("func_179124_c","color");
+			srgNames.put("func_179125_c","texGenCoord");
+			srgNames.put("func_179126_j","enableDepth");
+			srgNames.put("func_179127_m","enableFog");
+			srgNames.put("func_179128_n","matrixMode");
+			srgNames.put("func_179129_p","disableCull");
+			srgNames.put("func_179130_a","ortho");
+			srgNames.put("func_179131_c","color");
+			srgNames.put("func_179132_a","depthMask");
+			srgNames.put("func_179133_A","disableNormalize");
+			srgNames.put("func_179134_v","disableColorLogic");
+			srgNames.put("func_179135_a","colorMask");
+			srgNames.put("func_179136_a","doPolygonOffset");
+			srgNames.put("func_179137_b","translate");
+			srgNames.put("func_179138_g","setActiveTexture");
+			srgNames.put("func_179139_a","scale");
+			srgNames.put("func_179140_f","disableLighting");
+			srgNames.put("func_179141_d","enableAlpha");
+			srgNames.put("func_179142_g","enableColorMaterial");
+			srgNames.put("func_179143_c","depthFunc");
+			srgNames.put("func_179144_i","bindTexture");
+			srgNames.put("func_179145_e","enableLighting");
+			srgNames.put("func_179146_y","generateTexture");
+			srgNames.put("func_179147_l","enableBlend");
+			srgNames.put("func_179148_o","callList");
+			srgNames.put("func_179149_a","texGen");
+			srgNames.put("func_179150_h","deleteTexture");
+			srgNames.put("func_179151_a","clearDepth");
+			srgNames.put("func_179152_a","scale");
+			srgNames.put("func_179153_c","setFogEnd");
+			srgNames.put("func_179198_a","setDisabled");
+			srgNames.put("func_179199_a","setState");
+			srgNames.put("func_179200_b","setEnabled");
+			srgNames.put("func_187402_b","glFog");
+			srgNames.put("func_187412_c","glFogi");
 
-			furtherDeobf.put("func_148821_a","blendFunc");
-			furtherDeobf.put("func_179112_b","blendFunc");
-			furtherDeobf.put("func_179120_a","tryBlendFuncSeparate");
-			furtherDeobf.put("func_187401_a","blendFunc");
-			furtherDeobf.put("func_187428_a","tryBlendFuncSeparate");
+			srgNames.put("func_148821_a","blendFunc");
+			srgNames.put("func_179112_b","blendFunc");
+			srgNames.put("func_179120_a","tryBlendFuncSeparate");
+			srgNames.put("func_187401_a","blendFunc");
+			srgNames.put("func_187428_a","tryBlendFuncSeparate");
 		}
 		{
-			furtherDeobf.put("func_175715_c","sendBlockBreakProgress");
-			furtherDeobf.put("func_180441_b","sendBlockBreakProgress");
+			srgNames.put("func_175715_c","sendBlockBreakProgress");
+			srgNames.put("func_180441_b","sendBlockBreakProgress");
 		}
 		// (func_\w+),(\w+),.,(.*)
 		// furtherDeobf.put("$1","$2"); // $3
 		{
-			furtherDeobf.put("func_180798_a","renderDebugInfoLeft");
-			furtherDeobf.put("func_78474_d","renderRainSnow");
+			srgNames.put("func_180798_a","renderDebugInfoLeft");
+			srgNames.put("func_78474_d","renderRainSnow");
 
-			furtherDeobf.put("func_78484_h","addRainParticles");
+			srgNames.put("func_78484_h","addRainParticles");
 
 
-			furtherDeobf.put("func_177855_a","setBlockState"); //
-			furtherDeobf.put("func_177856_a","getBlockState"); //
-			furtherDeobf.put("func_177865_a","jsonToFactory"); //
-			furtherDeobf.put("func_177951_i","distanceSq"); // Calculate squared distance to the given Vector
-			furtherDeobf.put("func_177952_p","getZ"); // Get the Z coordinate
-			furtherDeobf.put("func_177954_c","distanceSq"); // Calculate squared distance to the given coordinates
-			furtherDeobf.put("func_177955_d","crossProduct"); // Calculate the cross product of this and the given Vector
-			furtherDeobf.put("func_177956_o","getY"); // Get the Y coordinate
-			furtherDeobf.put("func_177957_d","distanceSqToCenter"); // "Compute square of distance from point x, y, z to center of this Block"
-			furtherDeobf.put("func_177958_n","getX"); // Get the X coordinate
-			furtherDeobf.put("func_177963_a","add"); // Add the given coordinates to the coordinates of this BlockPos
-			furtherDeobf.put("func_177964_d","north"); // Offset this BlockPos n blocks in northern direction
-			furtherDeobf.put("func_177965_g","east"); // Offset this BlockPos n blocks in eastern direction
-			furtherDeobf.put("func_177967_a","offset"); // Offsets this BlockPos n blocks in the given direction
-			furtherDeobf.put("func_177968_d","south"); // Offset this BlockPos 1 block in southern direction
-			furtherDeobf.put("func_177969_a","fromLong"); // Create a BlockPos from a serialized long value (created by toLong)
-			furtherDeobf.put("func_177970_e","south"); // Offset this BlockPos n blocks in southern direction
-			furtherDeobf.put("func_177971_a","add"); // Add the given Vector to this BlockPos
-			furtherDeobf.put("func_177972_a","offset"); // Offset this BlockPos 1 block in the given direction
-			furtherDeobf.put("func_177973_b","subtract"); // Subtract the given Vector from this BlockPos
-			furtherDeobf.put("func_177974_f","east"); // Offset this BlockPos 1 block in eastern direction
-			furtherDeobf.put("func_177975_b","getAllInBoxMutable"); // "Like getAllInBox but reuses a single MutableBlockPos instead. If this method is used, the resulting BlockPos instances can only be used inside the iteration loop."
-			furtherDeobf.put("func_177976_e","west"); // Offset this BlockPos 1 block in western direction
-			furtherDeobf.put("func_177977_b","down"); // Offset this BlockPos 1 block down
-			furtherDeobf.put("func_177978_c","north"); // Offset this BlockPos 1 block in northern direction
-			furtherDeobf.put("func_177979_c","down"); // Offset this BlockPos n blocks down
-			furtherDeobf.put("func_177980_a","getAllInBox"); // Create an Iterable that returns all positions in the box specified by the given corners
-			furtherDeobf.put("func_177981_b","up"); // Offset this BlockPos n blocks up
-			furtherDeobf.put("func_177982_a","add"); // Add the given coordinates to the coordinates of this BlockPos
-			furtherDeobf.put("func_177984_a","up"); // Offset this BlockPos 1 block up
-			furtherDeobf.put("func_177985_f","west"); // Offset this BlockPos n blocks in western direction
-			furtherDeobf.put("func_177986_g","toLong"); // Serialize this BlockPos into a long value
+			srgNames.put("func_177855_a","setBlockState"); //
+			srgNames.put("func_177856_a","getBlockState"); //
+			srgNames.put("func_177865_a","jsonToFactory"); //
+			srgNames.put("func_177951_i","distanceSq"); // Calculate squared distance to the given Vector
+			srgNames.put("func_177952_p","getZ"); // Get the Z coordinate
+			srgNames.put("func_177954_c","distanceSq"); // Calculate squared distance to the given coordinates
+			srgNames.put("func_177955_d","crossProduct"); // Calculate the cross product of this and the given Vector
+			srgNames.put("func_177956_o","getY"); // Get the Y coordinate
+			srgNames.put("func_177957_d","distanceSqToCenter"); // "Compute square of distance from point x, y, z to center of this Block"
+			srgNames.put("func_177958_n","getX"); // Get the X coordinate
+			srgNames.put("func_177963_a","add"); // Add the given coordinates to the coordinates of this BlockPos
+			srgNames.put("func_177964_d","north"); // Offset this BlockPos n blocks in northern direction
+			srgNames.put("func_177965_g","east"); // Offset this BlockPos n blocks in eastern direction
+			srgNames.put("func_177967_a","offset"); // Offsets this BlockPos n blocks in the given direction
+			srgNames.put("func_177968_d","south"); // Offset this BlockPos 1 block in southern direction
+			srgNames.put("func_177969_a","fromLong"); // Create a BlockPos from a serialized long value (created by toLong)
+			srgNames.put("func_177970_e","south"); // Offset this BlockPos n blocks in southern direction
+			srgNames.put("func_177971_a","add"); // Add the given Vector to this BlockPos
+			srgNames.put("func_177972_a","offset"); // Offset this BlockPos 1 block in the given direction
+			srgNames.put("func_177973_b","subtract"); // Subtract the given Vector from this BlockPos
+			srgNames.put("func_177974_f","east"); // Offset this BlockPos 1 block in eastern direction
+			srgNames.put("func_177975_b","getAllInBoxMutable"); // "Like getAllInBox but reuses a single MutableBlockPos instead. If this method is used, the resulting BlockPos instances can only be used inside the iteration loop."
+			srgNames.put("func_177976_e","west"); // Offset this BlockPos 1 block in western direction
+			srgNames.put("func_177977_b","down"); // Offset this BlockPos 1 block down
+			srgNames.put("func_177978_c","north"); // Offset this BlockPos 1 block in northern direction
+			srgNames.put("func_177979_c","down"); // Offset this BlockPos n blocks down
+			srgNames.put("func_177980_a","getAllInBox"); // Create an Iterable that returns all positions in the box specified by the given corners
+			srgNames.put("func_177981_b","up"); // Offset this BlockPos n blocks up
+			srgNames.put("func_177982_a","add"); // Add the given coordinates to the coordinates of this BlockPos
+			srgNames.put("func_177984_a","up"); // Offset this BlockPos 1 block up
+			srgNames.put("func_177985_f","west"); // Offset this BlockPos n blocks in western direction
+			srgNames.put("func_177986_g","toLong"); // Serialize this BlockPos into a long value
 		}
 		{ // thank you for making me go through all this suffering Mojang
 			/*
@@ -301,7 +300,7 @@ public class TransformerCoreLeafia implements IClassTransformer {
 			furtherDeobf.put("field_82860_h","world");
 			furtherDeobf.put("field_85192_a","world");*/
 		}
-		furtherDeobf.put("func_73044_a","saveAllChunks");
+		srgNames.put("func_73044_a","saveAllChunks");
 	}
 	public static class Helper {
 		MethodNode method;
@@ -390,7 +389,7 @@ public class TransformerCoreLeafia implements IClassTransformer {
 			String s = "#      "+String.format("%02Xh : ",node.getOpcode()&0xFF)+(opcodeMap.containsKey(node.getOpcode()&0xFF) ? opcodeMap.get(node.getOpcode()&0xFF) : node.getClass().getSimpleName())+" >> ";
 			if (node instanceof MethodInsnNode) {
 				String ass = pain.mapMethodName(((MethodInsnNode)node).owner,((MethodInsnNode)node).name,((MethodInsnNode)node).desc);
-				s = s + pain.map(((MethodInsnNode)node).owner)+"."+furtherDeobf.getOrDefault(ass,ass)+pain.mapMethodDesc(((MethodInsnNode)node).desc);
+				s = s + pain.map(((MethodInsnNode)node).owner)+"."+srgNames.getOrDefault(ass,ass)+pain.mapMethodDesc(((MethodInsnNode)node).desc);
 			} else if (node instanceof VarInsnNode)
 				s = s +((VarInsnNode)node).var;
 			else if (node instanceof FieldInsnNode)
@@ -635,11 +634,11 @@ public class TransformerCoreLeafia implements IClassTransformer {
 									progress = -11;
 								else if (ds.matches(".*\\(L.*BlockPos;\\)L.*Biome;.*") && progress == 0)
 									progress = 1;
-								else if (furtherDeobf.getOrDefault(nm,nm).equals("down") && progress == 10)
+								else if (srgNames.getOrDefault(nm,nm).equals("down") && progress == 10)
 									progress = 11;
 								else if (ds.matches(".*\\)L.*IBlockState;.*") && progress == 20)
 									progress = 21;
-								else if (furtherDeobf.getOrDefault(nm,nm).equals("nextDouble") && progress >= 30 && progress < 40 && progress%2 == 0)
+								else if (srgNames.getOrDefault(nm,nm).equals("nextDouble") && progress >= 30 && progress < 40 && progress%2 == 0)
 									progress++;
 							} else if (insn.getOpcode() == INVOKEINTERFACE && ds.matches(".*\\)L.*AxisAlignedBB;.*") && progress == 40)
 								progress = 41;
@@ -862,9 +861,9 @@ public class TransformerCoreLeafia implements IClassTransformer {
 			if (deobf != null)
 				attempt.add(deobf);
 			System.out.println("#      De: "+deobf);
-			if (furtherDeobf.containsKey(deobf)) {
-				System.out.println("#      MCP deobf: " + furtherDeobf.get(deobf));
-				attempt.add(furtherDeobf.get(deobf));
+			if (srgNames.containsKey(deobf)) {
+				System.out.println("#      MCP deobf: " + srgNames.get(deobf));
+				attempt.add(srgNames.get(deobf));
 			} else
 				System.out.println("#      MCP deobf was not able");
 

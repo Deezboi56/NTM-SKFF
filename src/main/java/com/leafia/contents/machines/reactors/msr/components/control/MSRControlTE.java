@@ -62,11 +62,12 @@ public class MSRControlTE extends TileEntity implements ITickable, LeafiaPacketR
 	LeafiaSet<MSRElementTE> TEs = new LeafiaSet<>();
 	void clearTEs() {
 		for (MSRElementTE te : TEs) {
-			if (te.control.equals(getPos())) {
+			if (te.control != null && te.control.equals(getPos())) {
 				te.control = null;
 				te.restriction = 0;
 			}
 		}
+		TEs.clear();
 	}
 	@Override
 	public void update() {

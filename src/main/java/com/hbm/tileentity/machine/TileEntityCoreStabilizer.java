@@ -1,6 +1,7 @@
 package com.hbm.tileentity.machine;
 
 import api.hbm.energy.IEnergyUser;
+import com.hbm.config.MachineConfig;
 import com.hbm.inventory.control_panel.*;
 import com.hbm.items.ModItems;
 import com.hbm.items.machine.ItemLens;
@@ -133,7 +134,7 @@ public class TileEntityCoreStabilizer extends DFCBaseTE implements ITickable, IE
 
     @Nullable
     TileEntityCore getCore() {
-        return super.getCore(range);
+        return super.getCore(MachineConfig.dfcComponentRange);
 		/*
 		EnumFacing dir = EnumFacing.getFront(this.getBlockMetadata());
 		for(int i = 1; i <= range; i++) {
@@ -235,8 +236,6 @@ public class TileEntityCoreStabilizer extends DFCBaseTE implements ITickable, IE
     //public int beam;
     public LensType lens = LensType.STANDARD;
     public boolean isOn;
-
-    public static final int range = 50;
 
     public TileEntityCoreStabilizer() {
         super(1);

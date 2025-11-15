@@ -175,7 +175,7 @@ public class RenderCore extends TileEntitySpecialRenderer<TileEntityCore> {
 		double startRadius = scale*0.5;
 		double endRadius = 0.3;
 		int resolution = 8;
-		bindTexture(new ResourceLocation(RefStrings.MODID,"textures/models/leafia/tomblast_desat.png"));
+		bindTexture(new ResourceLocation(RefStrings.MODID,"textures/models/leafia/null-noisemap.png"));
 		//CompositeBrush brush = CompositeBrush.instance;
 		//brush.startDrawingQuads();
 

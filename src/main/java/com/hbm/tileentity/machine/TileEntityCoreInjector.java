@@ -1,5 +1,6 @@
 package com.hbm.tileentity.machine;
 
+import com.hbm.config.MachineConfig;
 import com.hbm.forgefluid.FFUtils;
 import com.hbm.interfaces.ITankPacketAcceptor;
 import com.hbm.packet.FluidTankPacket;
@@ -25,7 +26,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class TileEntityCoreInjector extends DFCBaseTE implements ITickable, IFluidHandler, ITankPacketAcceptor {
 
     public FluidTank[] tanks;
-    public static final int range = 50;
     public int beam;
 
     public TileEntityCoreInjector() {
@@ -37,7 +37,7 @@ public class TileEntityCoreInjector extends DFCBaseTE implements ITickable, IFlu
 
     @Override
     public void update() {
-        TileEntityCore core = getCore(range);
+        TileEntityCore core = getCore(MachineConfig.dfcComponentRange);
         if (!world.isRemote) {
             LeafiaPacket._start(this).__write(31,targetPosition).__sendToAffectedClients();
 

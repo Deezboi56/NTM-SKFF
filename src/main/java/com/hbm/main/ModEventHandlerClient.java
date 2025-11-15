@@ -8,6 +8,7 @@ import com.hbm.blocks.ILookOverlay;
 import com.hbm.blocks.ModBlocks;
 import com.hbm.blocks.generic.TrappedBrick.Trap;
 import com.hbm.capability.HbmCapability;
+import com.hbm.config.BombConfig;
 import com.hbm.config.GeneralConfig;
 import com.hbm.entity.mob.EntityHunterChopper;
 import com.hbm.entity.projectile.EntityChopperMine;
@@ -227,7 +228,7 @@ public class ModEventHandlerClient {
 			if (optifineWarning)
 				GuiCTMWarning.text.add("Optifine is recommended as it magically fixes rendering stuff.");
 			if (backupsWarning) {
-				GuiCTMWarning.text.add("Backups is "+(optifineWarning ? "also" : "")+"recommended as the mod is highly unstable.");
+				GuiCTMWarning.text.add("Backups is "+(optifineWarning ? "also " : "")+"recommended as the mod is highly unstable.");
 				GuiCTMWarning.downloadButtonIndex = GuiCTMWarning.text.size();
 				GuiCTMWarning.text.add("Click to download Backups");
 			}
@@ -1367,8 +1368,8 @@ public class ModEventHandlerClient {
 							shader.accessor.get("intensity").set((float)(IdkWhereThisShitBelongs.darkness)*(IdkWhereThisShitBelongs.dustDisplayTicks/30f)/2f);
 							break;
 						case "nuclear":
-							shader.accessor.get("blur").set(LeafiaShakecam.blurSum);
-							shader.accessor.get("bloom").set(LeafiaShakecam.bloomSum);
+							shader.accessor.get("blur").set(LeafiaShakecam.blurSum*BombConfig.blurMultiplier);
+							shader.accessor.get("bloom").set(LeafiaShakecam.bloomSum*BombConfig.bloomMultiplier);
 							break;
 					}
 				}

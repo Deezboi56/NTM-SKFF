@@ -1,6 +1,7 @@
 package com.hbm.tileentity.machine;
 
 import com.hbm.blocks.machine.MachineFieldDisturber;
+import com.hbm.config.MachineConfig;
 import com.hbm.entity.logic.EntityNukeExplosionMK3;
 import com.hbm.explosion.ExplosionNT;
 import com.hbm.explosion.ExplosionNT.ExAttrib;
@@ -592,7 +593,7 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 					exp.waste = false;
 				}
 				if (jammerPos == null) {
-					if (overloadTimer <= 20*6) {
+					if (overloadTimer <= 20*6 && MachineConfig.dfcInitialBlast) {
 						if (overloadTimer == 0) {
 							LeafiaPacket._start(this)
 									.__write(packetKeys.PLAY_SOUND.key, 2)
@@ -602,27 +603,29 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 					} else {
 						world.playSound(null, pos.getX()+0.5f, pos.getY()+0.5f, pos.getZ()+0.5f, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 100000.0F, 1.0F);
 
-						world.playSound(null, pos.getX()+0.5f, pos.getY()+0.5f, pos.getZ()+0.5f, HBMSoundEvents.actualexplosion, SoundCategory.BLOCKS, 50.0F, 1.0F);
-						PacketDispatcher.wrapper.sendToAllAround(
-								new CommandLeaf.ShakecamPacket(new String[]{
-										"type=smooth",
-										"preset=RUPTURE",
-										"blurDulling*2",
-										"speed*1.5",
-										"duration/2",
-										"range=300"
-								}).setPos(pos),
-								new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 400)
-						);
-						LeafiaColor col = new LeafiaColor(colorCatalyst);
-						DFCBlastParticle blast = new DFCBlastParticle((float)col.red,(float)col.green,(float)col.blue,250);
-						blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
+						if (MachineConfig.dfcInitialBlast) {
+							world.playSound(null,pos.getX()+0.5f,pos.getY()+0.5f,pos.getZ()+0.5f,HBMSoundEvents.actualexplosion,SoundCategory.BLOCKS,50.0F,1.0F);
+							PacketDispatcher.wrapper.sendToAllAround(
+									new CommandLeaf.ShakecamPacket(new String[]{
+											"type=smooth",
+											"preset=RUPTURE",
+											"blurDulling*2",
+											"speed*1.5",
+											"duration/2",
+											"range=300"
+									}).setPos(pos),
+									new NetworkRegistry.TargetPoint(world.provider.getDimension(),pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5,400)
+							);
+							LeafiaColor col = new LeafiaColor(colorCatalyst);
+							DFCBlastParticle blast = new DFCBlastParticle((float) col.red,(float) col.green,(float) col.blue,250);
+							blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
 
-						ExplosionNT nt = new ExplosionNT(world,null,pos.getX()+0.5f, pos.getY()+0.5f, pos.getZ()+0.5f,50);
-						nt.maxExplosionResistance = 28;
-						nt.iterationLimit = 150;
-						nt.ignoreBlockPoses.add(pos);
-						nt.explode();
+							ExplosionNT nt = new ExplosionNT(world,null,pos.getX()+0.5f,pos.getY()+0.5f,pos.getZ()+0.5f,50);
+							nt.maxExplosionResistance = 28;
+							nt.iterationLimit = 150;
+							nt.ignoreBlockPoses.add(pos);
+							nt.explode();
+						}
 
 						if (!EntityNukeExplosionMK3.isJammed(this.world, exp)) {
 							destroyed = true;
@@ -660,7 +663,7 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						explosionIn = Math.max(explosionIn - (time - explosionClock) / 1000d, 0);
 						collapsing = MathHelper.clamp(1-explosionIn/120,0,1);
 						explosionClock = time;
-						if (explosionIn <= 15 && !finalPhase) {
+						if (explosionIn <= 15 && !finalPhase && MachineConfig.dfcFinalPhase) {
 							finalPhase = true;
 							PacketDispatcher.wrapper.sendToAllAround(
 									new CommandLeaf.ShakecamPacket(new String[]{
@@ -853,8 +856,8 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 				}
 			}
 			ringSpinSpeed = 360/20f;
-			if (120-collapsing*120 <= 15)
-				finalPhase = true;
+			//if (120-collapsing*120 <= 15)
+			//	finalPhase = true;
 			if (collapsing > 0.95) {
 				double percent = (collapsing-0.95)/0.05;
 				ringSpinSpeed += 10800/20f*(float)percent;
