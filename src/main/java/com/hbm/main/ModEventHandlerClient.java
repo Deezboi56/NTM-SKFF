@@ -116,6 +116,7 @@ import com.leafia.dev.LeafiaUtil;
 import com.leafia.dev.container_utility.LeafiaPacket;
 import com.leafia.dev.container_utility.LeafiaPacketReceiver;
 import com.leafia.dev.customblock.ICustomBlock;
+import com.leafia.eventbuses.LeafiaClientListener.Digamma;
 import com.leafia.passive.LeafiaPassiveLocal;
 import com.leafia.passive.effects.IdkWhereThisShitBelongs;
 import com.leafia.passive.effects.LeafiaShakecam;
@@ -299,6 +300,7 @@ public class ModEventHandlerClient {
 		darkness2 = EnumHelperClient.addMusicType("DARKNESS_MENU", HBMSoundEvents.darkness2, 12000, 14000);
 		this.addShader("tom",new ResourceLocation("hbm:shaders/help/tom_desat.json"));
 		this.addShader("nuclear",new ResourceLocation("hbm:shaders/help/nuclear.json"));
+		this.addShader("drx",new ResourceLocation("hbm:shaders/help/digamma.json"));
 		//Framebuffer tempCanvas = new Framebuffer(mc.getFramebuffer().framebufferWidth,mc.getFramebuffer().framebufferHeight,mc.getFramebuffer().useDepth);
 		//putShader("myaw","invert",mainCanvas,tempCanvas).getShaderUniformOrDefault("InverseAmount").set(0.8F);
 		//putShader("blit","blit",tempCanvas,mainCanvas);
@@ -1364,6 +1366,9 @@ public class ModEventHandlerClient {
 				for (String s : shaderGroups.keySet()) {
 					BigBruh shader = shaderGroups.get(s);
 					switch(s) {
+						case "drx":
+							shader.accessor.get("intensity").set(Digamma.digammaDose);
+							break;
 						case "tom":
 							shader.accessor.get("intensity").set((float)(IdkWhereThisShitBelongs.darkness)*(IdkWhereThisShitBelongs.dustDisplayTicks/30f)/2f);
 							break;

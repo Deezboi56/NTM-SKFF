@@ -5,8 +5,10 @@ import com.hbm.main.MainRegistry;
 import com.hbm.sound.AudioWrapper;
 import com.leafia.contents.machines.reactors.pwr.PWRData;
 import com.leafia.contents.machines.reactors.pwr.blocks.components.PWRComponentEntity;
+import com.leafia.dev.LeafiaDebug.Tracker;
 import com.leafia.dev.container_utility.LeafiaPacket;
 import com.leafia.dev.container_utility.LeafiaPacketReceiver;
+import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -18,6 +20,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nullable;
+import java.util.*;
 
 public class PWRControlTE extends TileEntity implements PWRComponentEntity, ITickable, LeafiaPacketReceiver {
     BlockPos corePos = null;
@@ -34,13 +37,17 @@ public class PWRControlTE extends TileEntity implements PWRComponentEntity, ITic
 
     public static final double speed = 0.1/20;
     public double targetPosition = 0;
+    List<Block> bluk = new ArrayList<>();
+    boolean initialTick = true;
 
     public void updateHeight() {
         if (!this.isInvalid() && world.isBlockLoaded(pos)) {
             Chunk chunk = world.getChunk(pos);
             BlockPos downPos = pos.down();
             height = 1;
+            bluk.clear();
             while (world.isValid(downPos)) {
+                bluk.add(world.getBlockState(downPos).getBlock());
                 if (world.getBlockState(downPos).getBlock() instanceof PWRControlBlock) {
                     height++;
                     if (world.isRemote) { // manually kill TEs below
@@ -159,47 +166,42 @@ public class PWRControlTE extends TileEntity implements PWRComponentEntity, ITic
         //if (world.isRemote) {
             //LeafiaPacket._validate(this); //LeafiaPacket._start(this).__write((byte)0,true).__setTileEntityQueryType(Chunk.EnumCreateEntityType.CHECK).__sendToServer();
         //}
-        connectUpper();
-        updateHeight();
     }
 
     @Override
     public void onChunkUnload() {
-        if (sound != null && playing) {
+        if (sound != null) {
             sound.stopSound();
         }
         sound = null;
         super.onChunkUnload();
     }
 
-    boolean playing = false;
-    int stupidworkaroundcooldown = 0;
     @Override
     public void update() {
+        if (initialTick) {
+            initialTick = false;
+            connectUpper();
+            updateHeight();
+        }
         if (this.data != null)
             this.data.update();
         if (world.isRemote) {
-            if (stupidworkaroundcooldown > 0) {
-                stupidworkaroundcooldown--;
-                return;
-            }
             if (!(world.getBlockState(pos.up()).getBlock() instanceof PWRControlBlock)) {
-                if (sound == null)
-                    sound = MainRegistry.proxy.getLoopedSoundStartStop(world,HBMSoundEvents.pwrRodLoop,HBMSoundEvents.pwrRodStart,HBMSoundEvents.pwrRodStop,SoundCategory.BLOCKS,pos.getX(),pos.getY(),pos.getZ(),0.0175f,0.75f);
-                if (playing) {
+                if (sound != null) {
                     if (targetPosition == position) {
                         sound.stopSound();
-                        stupidworkaroundcooldown = 5;
-                        playing = false;
+                        sound = null;
                     }
-                } else {
+                } else if (sound == null) {
                     if (targetPosition != position) {
+                        sound = MainRegistry.proxy.getLoopedSoundStartStop(world,HBMSoundEvents.pwrRodLoop,HBMSoundEvents.pwrRodStart,HBMSoundEvents.pwrRodStop,SoundCategory.BLOCKS,pos.getX(),pos.getY(),pos.getZ(),0.0175f,0.75f);
                         sound.startSound();
-                        playing = true;
                     }
                 }
             }
         } else {
+            Tracker._startProfile(this,"update");
             if (targetPosition != position) {
                 if (Math.abs(targetPosition - position) < speed/height)
                     position = targetPosition;
@@ -209,6 +211,12 @@ public class PWRControlTE extends TileEntity implements PWRComponentEntity, ITic
                 syncLocals();
                 this.markDirty();
             }
+            int offset = 1;
+            for (Block block : bluk) {
+                Tracker._tracePosition(this,pos.down(offset),block);
+                offset++;
+            }
+            Tracker._endProfile(this);
         }
     }
     public LeafiaPacket generateSyncPacket() {

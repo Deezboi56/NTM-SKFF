@@ -11,10 +11,12 @@ import com.hbm.lib.Library;
 import com.hbm.main.MainRegistry;
 import com.hbm.packet.LoopedSoundPacket;
 import com.hbm.packet.PacketDispatcher;
+import com.hbm.saveddata.RadiationSavedData;
 import com.hbm.tileentity.TileEntityMachineBase;
 import com.hbm.util.ContaminationUtil;
 import com.hbm.util.ContaminationUtil.ContaminationType;
 import com.hbm.util.ContaminationUtil.HazardType;
+import com.leafia.dev.optimization.LeafiaParticlePacket.DFCBlastParticle;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -31,6 +33,7 @@ import net.minecraft.util.ITickable;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -159,64 +162,112 @@ public class TileEntityFEL extends TileEntityMachineBase implements ITickable, I
 							this.distance = i;
 							float hardness = b.getBlock().getExplosionResistance(null);
 							boolean blocked = false;
-							switch(this.mode) {
-								case RADIO: blocked = true;break;
-								case MICRO:
-									if(b.getMaterial().isLiquid()){
-										world.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS,  1.0F, 1.0F);
-										world.setBlockToAir(new BlockPos(x, y, z));
-									} else if(b.getMaterial() == Material.GLASS || b.getMaterial().isOpaque())
+							if (b.getBlock() != ModBlocks.dfc_core) {
+								switch(this.mode) {
+									case RADIO:
 										blocked = true;
-									break;
-								case IR:
-									if(b.getMaterial().isOpaque() || b.getMaterial() == Material.GLASS)
-										blocked = true;
-									break;
-								case VISIBLE:
-									if(b.getMaterial().isOpaque()){
-										if(hardness < 10 && world.rand.nextInt(40) == 0){
-											world.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS,  1.0F, 1.0F);
-											world.setBlockState(new BlockPos(x, y, z), Blocks.FIRE.getDefaultState());
-										}else{
+										break;
+									case MICRO:
+										if (b.getMaterial().isLiquid()) {
+											world.playSound(null,x+0.5,y+0.5,z+0.5,SoundEvents.BLOCK_LAVA_EXTINGUISH,SoundCategory.BLOCKS,1.0F,1.0F);
+											world.setBlockToAir(new BlockPos(x,y,z));
+										} else if (b.getMaterial() == Material.GLASS || b.getMaterial().isOpaque())
 											blocked = true;
-										}
-									}
-									break;
-								case UV: 
-									if(b.getMaterial().isOpaque()){
-										if(hardness < 100 && world.rand.nextInt(20) == 0){
-											world.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS,  1.0F, 1.0F);
-											world.setBlockState(new BlockPos(x, y, z), Blocks.FIRE.getDefaultState());
-										}else{
+										break;
+									case IR:
+										if (b.getMaterial().isOpaque() || b.getMaterial() == Material.GLASS)
 											blocked = true;
+										break;
+									case VISIBLE:
+										if (b.getMaterial().isOpaque()) {
+											if (hardness < 10 && world.rand.nextInt(40) == 0) {
+												world.playSound(null,x+0.5,y+0.5,z+0.5,SoundEvents.BLOCK_LAVA_EXTINGUISH,SoundCategory.BLOCKS,1.0F,1.0F);
+												world.setBlockState(new BlockPos(x,y,z),Blocks.FIRE.getDefaultState());
+											} else {
+												blocked = true;
+											}
 										}
-									}
-									break;
-								case XRAY: 
-									if(b.getMaterial().isOpaque()){
-										if(hardness < 1000 && world.rand.nextInt(10) == 0){
-											world.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS,  1.0F, 1.0F);
-											world.setBlockState(new BlockPos(x, y, z), Blocks.FIRE.getDefaultState());
-										}else{
-											blocked = true;
+										break;
+									case UV:
+										if (b.getMaterial().isOpaque()) {
+											if (hardness < 100 && world.rand.nextInt(20) == 0) {
+												world.playSound(null,x+0.5,y+0.5,z+0.5,SoundEvents.BLOCK_LAVA_EXTINGUISH,SoundCategory.BLOCKS,1.0F,1.0F);
+												world.setBlockState(new BlockPos(x,y,z),Blocks.FIRE.getDefaultState());
+											} else {
+												blocked = true;
+											}
 										}
-									}
-									break;
-								case GAMMA: 
-									if(b.getMaterial().isOpaque()){
-										if(hardness < 3000 && world.rand.nextInt(5) == 0){
-											world.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS,  1.0F, 1.0F);
-											world.setBlockState(new BlockPos(x, y, z), ModBlocks.balefire.getDefaultState());
-										}else{
-											blocked = true;
+										break;
+									case XRAY:
+										if (b.getMaterial().isOpaque()) {
+											if (hardness < 1000 && world.rand.nextInt(10) == 0) {
+												world.playSound(null,x+0.5,y+0.5,z+0.5,SoundEvents.BLOCK_LAVA_EXTINGUISH,SoundCategory.BLOCKS,1.0F,1.0F);
+												world.setBlockState(new BlockPos(x,y,z),Blocks.FIRE.getDefaultState());
+											} else {
+												blocked = true;
+											}
 										}
+										break;
+									case GAMMA:
+										if (b.getMaterial().isOpaque()) {
+											if (hardness < 3000 && world.rand.nextInt(5) == 0) {
+												world.playSound(null,x+0.5,y+0.5,z+0.5,SoundEvents.BLOCK_LAVA_EXTINGUISH,SoundCategory.BLOCKS,1.0F,1.0F);
+												world.setBlockState(new BlockPos(x,y,z),ModBlocks.balefire.getDefaultState());
+											} else {
+												blocked = true;
+											}
+										}
+										break;
+									case DRX:
+										world.playSound(null,x+0.5,y+0.5,z+0.5,SoundEvents.BLOCK_LAVA_EXTINGUISH,SoundCategory.BLOCKS,1.0F,1.0F);
+										world.setBlockState(new BlockPos(x,y,z),((MainRegistry.polaroidID == 11) ? ModBlocks.digamma_matter : ModBlocks.fire_digamma).getDefaultState());
+										world.setBlockState(new BlockPos(x,y-1,z),ModBlocks.ash_digamma.getDefaultState());
+										break;
+								}
+							} else {
+								BlockPos p = new BlockPos(x,y,z);
+								TileEntity te = world.getTileEntity(p);
+								if (te instanceof TileEntityCore core) {
+									double scale = 1;
+									double power = (powerReq * ((mode.ordinal() == 0) ? 0 : Math.pow(4, mode.ordinal())))/5000;
+									core.incomingSpk = core.incomingSpk + power;
+									switch(this.mode) {
+										case RADIO:
+											core.temperature = core.temperature + 1*scale;
+											break;
+										case MICRO:
+											core.temperature = core.temperature + 5*scale;
+											break;
+										case IR:
+											core.temperature = core.temperature + 15*scale;
+											break;
+										case VISIBLE:
+											core.temperature = core.temperature + 7*scale;
+											break;
+										case UV:
+											core.temperature = core.temperature + 8.5*scale;
+											break;
+										case XRAY: {
+												core.temperature = core.temperature+12.5*scale;
+												DFCBlastParticle blast = new DFCBlastParticle(0,0.75f,0.75f,2);
+												blast.emit(new Vec3d(p).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
+												RadiationSavedData.incrementRad(world,p,5,10);
+											} break;
+										case GAMMA: {
+												core.temperature = core.temperature+32.5*scale;
+												DFCBlastParticle blast = new DFCBlastParticle(0.4f,1f,0.2f,5);
+												blast.emit(new Vec3d(p).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
+												RadiationSavedData.incrementRad(world,p,5,50);
+											} break;
+										case DRX: {
+												core.temperature = core.temperature+75.5*scale;
+												DFCBlastParticle blast = new DFCBlastParticle(1,0.2f,0.2f,10);
+												blast.emit(new Vec3d(p).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
+												ContaminationUtil.radiate(world,x+0.5,y+0.5,z+0.5,64,0,15,0);
+											} break;
 									}
-									break;
-								case DRX: 
-									world.playSound(null, x + 0.5, y + 0.5, z + 0.5, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS,  1.0F, 1.0F);
-									world.setBlockState(new BlockPos(x, y, z), ((MainRegistry.polaroidID == 11) ? ModBlocks.digamma_matter : ModBlocks.fire_digamma).getDefaultState());
-									world.setBlockState(new BlockPos(x, y-1, z), ModBlocks.ash_digamma.getDefaultState());
-									break;
+								}
+								blocked = true;
 							}
 							if(blocked)
 								break;

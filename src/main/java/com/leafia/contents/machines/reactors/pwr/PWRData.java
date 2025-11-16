@@ -420,7 +420,6 @@ public class PWRData implements ITickable, IFluidHandler, ITankPacketAcceptor, L
 
 	boolean valid = false;
 	float timeToDrainMalcoolant = 15;
-	@SideOnly(Side.CLIENT)
 	public int warnTicks = 0;
 	public double stressTimer = 300;
 

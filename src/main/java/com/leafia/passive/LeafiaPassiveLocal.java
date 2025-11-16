@@ -3,6 +3,7 @@ package com.leafia.passive;
 import com.hbm.tileentity.machine.TileEntityCore;
 import com.leafia.dev.LeafiaDebug.Tracker.TrackerLocal;
 import com.leafia.dev.optimization.diagnosis.RecordablePacket;
+import com.leafia.eventbuses.LeafiaClientListener.Digamma;
 import com.llib.group.LeafiaSet;
 import com.llib.math.MathLeafia;
 import net.minecraft.client.Minecraft;
@@ -22,6 +23,7 @@ public class LeafiaPassiveLocal {
 
 	public static void onTick(World world) {
 		TrackerLocal.localTick(Minecraft.getMinecraft().player);
+		Digamma.update();
 		for (Runnable callback : queue)
 			callback.run();
 		queue.clear();
