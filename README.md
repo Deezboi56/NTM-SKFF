@@ -3,6 +3,7 @@
 Here's my playground of NTM modding: This mod does not focus on porting stuff from 1.7.10, but rather throw in bunch of exclusive contents to make some flavor.<br>
 This mod aims on making frequent updates, <i>in exchange for less reliability and stability</i>. This is a local project not focused on production.<br>
 <b>Downloads can be found [here](https://github.com/abysschroma/NTM-but-uncomfortable/releases).</b>
+<br>Community Edition addon can be found [here](https://github.com/ntmleafia/NTM-Cursed-Addon/releases).
 
 If you've found a bug or feature requests, feel free to [open an issue](https://github.com/abysschroma/NTM-but-uncomfortable/issues/new).<br>
 
