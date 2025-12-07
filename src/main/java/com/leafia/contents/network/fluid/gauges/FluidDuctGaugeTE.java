@@ -46,7 +46,9 @@ public class FluidDuctGaugeTE extends FluidDuctEquipmentTE implements ITickable,
 
 	@Override
 	public void invalidate() {
-		network.listeners.remove(this);
+		try {
+			network.listeners.remove(this);
+		} catch (NullPointerException ignored) {}
 		super.invalidate();
 	}
 

@@ -55,6 +55,8 @@ import com.leafia.contents.network.spk_cable.SPKCableTE;
 import com.leafia.contents.resources.ItemMaterialsAutogenTint;
 import com.leafia.contents.resources.ItemMaterialsAutogenTintRender;
 import com.leafia.contents.resources.bedrockore.BedrockOreV2Render;
+import com.leafia.contents.worldgen.NTMStructBuffer;
+import com.leafia.contents.worldgen.NTMStructBuffer.StructLoader;
 import com.leafia.dev.blockitems.LeafiaQuickModel;
 import com.leafia.eventbuses.LeafiaClientListener;
 import com.leafia.passive.effects.IdkWhereThisShitBelongs;
@@ -74,6 +76,7 @@ import com.leafia.contents.machines.reactors.pwr.blocks.components.control.PWRCo
 import com.hbm.tileentity.machine.*;
 import com.llib.exceptions.LeafiaDevFlaw;
 import net.minecraft.client.particle.*;
+import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.common.Loader;
@@ -630,6 +633,9 @@ public class ClientProxy extends ServerProxy {
 		ClientRegistry.registerKeyBinding(fsbFlashlight);
 
 		HbmKeybinds.register();
+
+		((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(new StructLoader());
+
 		ClientRegistry.bindTileEntitySpecialRenderer(Reserved6TE.class, new Reserved6Render());
 
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityMachinePress.class, new RenderPress());

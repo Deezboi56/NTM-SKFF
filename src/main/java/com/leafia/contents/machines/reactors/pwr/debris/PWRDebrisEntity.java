@@ -74,7 +74,6 @@ public class PWRDebrisEntity extends EntityDebrisBase {
 			type = CONCRETE;
 		this.setType(type);
 	}
-	@SideOnly(Side.CLIENT)
 	boolean wasExtinguished = true;
 	@Override
 	public void onUpdate() {

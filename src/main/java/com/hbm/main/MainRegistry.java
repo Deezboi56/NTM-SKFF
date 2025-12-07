@@ -128,6 +128,7 @@ import com.leafia.contents.network.fluid.valves.FluidBoxValveTE;
 import com.leafia.contents.network.spk_cable.SPKCableTE;
 import com.leafia.contents.worldgen.ModBiomes;
 import com.leafia.contents.worldgen.ModBiomesGenerator;
+import com.leafia.contents.worldgen.NTMStructBuffer.StructLoader;
 import com.leafia.dev.proxy.TileEntityProxyFluidIO;
 import com.leafia.dev.blockitems.LeafiaQuickModel;
 import com.leafia.dev.fluids.ntmtraits.*;
@@ -1039,6 +1040,8 @@ public class MainRegistry {
 		EngineRecipes.registerEngineRecipes();
 		FluidCombustionRecipes.registerFluidCombustionRecipes();
 		HbmDetox.init();
+
+		StructLoader.init();
 
 		FluidContainerRegistry.registerContainer(Item.getItemFromBlock(ModBlocks.lox_barrel), ModItems.tank_steel, new FluidStack(ModForgeFluids.OXYGEN, 10000));
 		FluidContainerRegistry.registerContainer(Item.getItemFromBlock(ModBlocks.pink_barrel), ModItems.tank_steel, new FluidStack(ModForgeFluids.KEROSENE, 10000));

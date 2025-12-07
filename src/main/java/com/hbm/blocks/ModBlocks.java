@@ -26,6 +26,8 @@ import com.hbm.tileentity.DoorDecl;
 import com.hbm.tileentity.machine.TileEntityMultiblock;
 import com.hbm.tileentity.machine.TileEntityWatzStruct;
 import com.leafia.contents.building.BlockPinkDoor;
+import com.leafia.contents.building.linedasphalt.AsphaltBlock;
+import com.leafia.contents.building.linedasphalt.LinedAsphaltBlock;
 import com.leafia.contents.building.mixed.BlockMixedConcrete;
 import com.leafia.dev.hazards.ItemRads;
 import com.leafia.contents.machines.elevators.EvBuffer;
@@ -205,7 +207,7 @@ public class ModBlocks {
 	}
 	
 	//Generic blocks
-	public static final Block asphalt = new BlockBase(Material.ROCK, "asphalt").setCreativeTab(MainRegistry.blockTab).setHardness(15.0F).setResistance(CONCRETE.half());
+	public static final Block asphalt = new AsphaltBlock(Material.ROCK, "asphalt").setCreativeTab(MainRegistry.blockTab).setHardness(15.0F).setResistance(CONCRETE.half());
 	public static final Block reinforced_glass = new BlockNTMGlass(Material.GLASS, BlockRenderLayer.CUTOUT, false, true, "reinforced_glass").setCreativeTab(MainRegistry.blockTab).setLightOpacity(0).setHardness(15.0F).setResistance(RE_GLASS.v);
 	public static final Block reinforced_light = new BlockRadResistant(Material.ROCK, "reinforced_light").setCreativeTab(MainRegistry.blockTab).setLightOpacity(15).setLightLevel(1.0F).setHardness(15.0F).setResistance(RE_LIGHTGEM.v);
 	public static final Block reinforced_lamp_off = new ReinforcedLamp(Material.ROCK, false, "reinforced_lamp_off").setCreativeTab(MainRegistry.blockTab).setHardness(15.0F).setResistance(RE_RSLAMP.v);
@@ -253,6 +255,49 @@ public class ModBlocks {
 	public static final Block concrete__ext_purple = new BlockBase(Material.ROCK, "concrete__ext_purple").setCreativeTab(MainRegistry.blockTab).setHardness(15.0F).setResistance(CONCRETE.v);
 	public static final Block concrete__ext_sand = new BlockBase(Material.ROCK, "concrete__ext_sand").setCreativeTab(MainRegistry.blockTab).setHardness(15.0F).setResistance(CONCRETE.v);
 
+	static boolean asphalt_dummy = LinedAsphalts.dummy;
+	public static class LinedAsphalts {
+		static boolean dummy = false;
+		public static final Map<String,Block> blocks = new HashMap<>();
+		public static final Map<String,String> replacementMap = new HashMap<>(); // i'm too stupid to make this an algorithm
+		static {
+			replacementMap.put("xzns","xns");
+			replacementMap.put("xzwe","zwe");
+			replacementMap.put("xnswe","xznswe");
+			replacementMap.put("znswe","xznswe");
+			replacementMap.put("xznse","xnse");
+			replacementMap.put("xzswe","zswe");
+			replacementMap.put("xznwe","znwe");
+			replacementMap.put("xznsw","xnsw");
+			blocks.put("",ModBlocks.asphalt);
+			for (int x = 0; x < 2; x++) {
+				for (int z = 0; z < 2; z++) {
+					for (int n = 0; n < 2; n++) {
+						for (int s = 0; s < 2; s++) {
+							for (int w = 0; w < 2; w++) {
+								for (int e = 0; e < 2; e++) {
+									StringBuilder builder = new StringBuilder();
+									if (x == 1) builder.append("x");
+									if (z == 1) builder.append("z");
+									if (n == 1) builder.append("n");
+									if (s == 1) builder.append("s");
+									if (w == 1) builder.append("w");
+									if (e == 1) builder.append("e");
+									String str = builder.toString();
+									if (str.isEmpty()) continue;
+									if (replacementMap.containsKey(str)) continue;
+									Block block = new LinedAsphaltBlock("asphalt_lined_"+str,str);
+									block.setCreativeTab(MainRegistry.blockTab).setHardness(15.0F).setResistance(CONCRETE.half());
+									blocks.put(str,block);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	static boolean mixed_dummy = MixedConcretes.dummy;
 	public static class MixedConcretes {
 		static boolean dummy = false;
@@ -260,6 +305,10 @@ public class ModBlocks {
 		public static final Map<String,BlockMixedConcrete> blocks = new HashMap<>();
 		static {
 			idMap.put("brick_concrete","brick");
+			idMap.put("brick_concrete_mossy","brickm");
+			idMap.put("brick_concrete_cracked","brickc");
+			idMap.put("brick_concrete_broken","brickb");
+			idMap.put("ducrete_brick","ducrete");
 			idMap.put("concrete","raw");
 			for (EnumDyeColor dye : EnumDyeColor.values())
 				idMap.put("concrete_"+dye.getName(),dye.getName());

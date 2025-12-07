@@ -272,17 +272,195 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 		componentPositions.clear();
 		if (destroyed) return;
 		if (!world.isRemote) {
-			lastStabilizers = stabilizers;
-			stabilizers = 0;
+			tickServer();
+		} else {
+			tickClient();
+		}
+	}
+
+	void handleOverloadAndExplosion(double damageA,double damageB) {
+		if ((damageA >= 100 || damageB >= 100) && temperature > 100 || finalPhase) {
+			EntityNukeExplosionMK3 exp = null;
+			if (jammerPos != null) {
+				if (!(world.getBlockState(jammerPos).getBlock() instanceof MachineFieldDisturber))
+					jammerPos = null;
+			}
+			if (explosionIn < 10 || jammerPos == null) { // stand by
+				exp = new EntityNukeExplosionMK3(world);
+				exp.posX = pos.getX();
+				exp.posY = pos.getY();
+				exp.posZ = pos.getZ();
+				exp.destructionRange = 20+(int)Math.pow(temperature,0.4);
+				exp.speed = 25;
+				exp.coefficient = 1.0F;
+				exp.waste = false;
+			}
+			if (jammerPos == null) {
+				if (overloadTimer <= 20*6 && MachineConfig.dfcInitialBlast) {
+					if (overloadTimer == 0) {
+						LeafiaPacket._start(this)
+								.__write(packetKeys.PLAY_SOUND.key, 2)
+								.__sendToAll();
+					}
+					overloadTimer++;
+				} else {
+					world.playSound(null, pos.getX()+0.5f, pos.getY()+0.5f, pos.getZ()+0.5f, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 100000.0F, 1.0F);
+
+					if (MachineConfig.dfcInitialBlast) {
+						world.playSound(null,pos.getX()+0.5f,pos.getY()+0.5f,pos.getZ()+0.5f,HBMSoundEvents.actualexplosion,SoundCategory.BLOCKS,50.0F,1.0F);
+						PacketDispatcher.wrapper.sendToAllAround(
+								new CommandLeaf.ShakecamPacket(new String[]{
+										"type=smooth",
+										"preset=RUPTURE",
+										"blurDulling*2",
+										"speed*1.5",
+										"duration/2",
+										"range=300"
+								}).setPos(pos),
+								new NetworkRegistry.TargetPoint(world.provider.getDimension(),pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5,400)
+						);
+						LeafiaColor col = new LeafiaColor(colorCatalyst);
+						DFCBlastParticle blast = new DFCBlastParticle((float) col.red,(float) col.green,(float) col.blue,250);
+						blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
+
+						ExplosionNT nt = new ExplosionNT(world,null,pos.getX()+0.5f,pos.getY()+0.5f,pos.getZ()+0.5f,50);
+						nt.maxExplosionResistance = 28;
+						nt.iterationLimit = 150;
+						nt.ignoreBlockPoses.add(pos);
+						nt.explode();
+					}
+
+					if (!EntityNukeExplosionMK3.isJammed(this.world, exp)) {
+						destroyed = true;
+						world.spawnEntity(exp);
+						EntityCloudFleijaRainbow cloud = new EntityCloudFleijaRainbow(world, exp.destructionRange);
+						cloud.posX = pos.getX();
+						cloud.posY = pos.getY();
+						cloud.posZ = pos.getZ();
+						world.spawnEntity(cloud);
+					} else {
+						jammerPos = EntityNukeExplosionMK3.lastDetectedJammer;
+						if (explosionIn < 0) {
+							explosionIn = 120;
+							explosionClock = System.currentTimeMillis();
+							LeafiaPacket._start(this)
+									.__write(packetKeys.PLAY_SOUND.key, 0)
+									.__sendToAll();
+						}
+					}
+				}
+			}
+			if (jammerPos != null) {
+				boolean tick = true;
+				MinecraftServer server = world.getMinecraftServer();
+				if (server != null) {
+					//LeafiaDebug.debugLog(world, "isSinglePlayer: " + server.isSinglePlayer());
+					//LeafiaDebug.debugLog(world, "isServerInOnlineMode: " + server.isServerInOnlineMode());
+					//LeafiaDebug.debugLog(world, "isDedicatedServer: " + server.isDedicatedServer());
+					//LeafiaDebug.debugLog(world, TextFormatting.GOLD + "Time Left: " + explosionIn);
+					if (!server.isDedicatedServer())
+						tick = !Minecraft.getMinecraft().isGamePaused();
+				}
+				if (tick) {
+					long time = System.currentTimeMillis();
+					explosionIn = Math.max(explosionIn - (time - explosionClock) / 1000d, 0);
+					collapsing = MathHelper.clamp(1-explosionIn/120,0,1);
+					explosionClock = time;
+					if (explosionIn <= 15 && !finalPhase && MachineConfig.dfcFinalPhase) {
+						finalPhase = true;
+						PacketDispatcher.wrapper.sendToAllAround(
+								new CommandLeaf.ShakecamPacket(new String[]{
+										"type=smooth",
+										"preset=RUPTURE",
+										"blurDulling*2",
+										"speed*1.5",
+										"duration/2",
+										"range=300"
+								}).setPos(pos),
+								new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 400)
+						);
+						PacketDispatcher.wrapper.sendToAllAround(
+								new CommandLeaf.ShakecamPacket(new String[]{
+										"type=smooth",
+										"preset=QUAKE",
+										"blurDulling*4",
+										"speed*3",
+										"duration=40",
+										"range=300"
+								}).setPos(pos),
+								new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 400)
+						);
+						LeafiaPacket._start(this)
+								.__write(packetKeys.PLAY_SOUND.key, 3)
+								.__sendToAll();
+
+						ExplosionNT nt = new ExplosionNT(world,null,pos.getX()+0.5f, pos.getY()+0.5f, pos.getZ()+0.5f,150);
+						nt.iterationLimit = 150;
+						nt.overrideResolution(24);
+						nt.ignoreBlockPoses.add(pos);
+						nt.addAttrib(ExAttrib.FIRE);
+						nt.addAttrib(ExAttrib.DFC_FALL);
+						nt.explode();
+						LeafiaColor col = new LeafiaColor(colorCatalyst);
+						DFCBlastParticle blast = new DFCBlastParticle((float)col.red,(float)col.green,(float)col.blue,250);
+						blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
+					}
+					if (finalPhase) {
+						LeafiaColor col = new LeafiaColor(colorCatalyst);
+						DFCBlastParticle blast = new DFCBlastParticle((float)col.red,(float)col.green,(float)col.blue,20);
+						blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
+					}
+					if (explosionIn <= 0 && exp != null) {
+						PacketDispatcher.wrapper.sendToAllAround(
+								new CommandLeaf.ShakecamPacket(new String[]{
+										"type=smooth",
+										"preset=PWR_NEAR",
+										"duration*2",
+										"intensity*1.5",
+										"range=200"
+								}).setPos(pos),
+								new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 300)
+						);
+						world.playSound(null, pos, HBMSoundEvents.dfc_explode, SoundCategory.BLOCKS, 100, 1);
+						destroyed = true;
+						world.spawnEntity(exp);
+						EntityCloudFleijaRainbow cloud = new EntityCloudFleijaRainbow(world, exp.destructionRange);
+						cloud.posX = pos.getX();
+						cloud.posY = pos.getY();
+						cloud.posZ = pos.getZ();
+						world.spawnEntity(cloud);
+					}
+				}
+			}
+		} else {
+			if (explosionIn >= 0) {
+				jammerPos = null;
+				explosionIn = -1;
+				collapsing = 0;
+				LeafiaPacket._start(this)
+						.__write(packetKeys.PLAY_SOUND.key, 1)
+						.__sendToAll();
+			} else if (overloadTimer > 0) {
+				LeafiaPacket._start(this)
+						.__write(packetKeys.PLAY_SOUND.key, 1)
+						.__sendToAll();
+				overloadTimer = 0;
+			}
+		}
+	}
+
+	public void tickServer() {
+		lastStabilizers = stabilizers;
+		stabilizers = 0;
 			/*
 			if(heat > 0 && heat >= field) {
-				
+
 				int fill = tanks[0].getFluidAmount() + tanks[1].getFluidAmount();
 				int max = tanks[0].getCapacity() + tanks[1].getCapacity();
 				int mod = heat * 10;
-				
+
 				int size = Math.max(Math.min(fill * mod / max, 1000), 50);
-				
+
 				//System.out.println(fill + " * " + mod + " / " + max + " = " + size);
 
 	    		world.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 100000.0F, 1.0F);
@@ -297,7 +475,7 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 				exp.waste = false;
 				if(overload >= 60 && !EntityNukeExplosionMK3.isJammed(this.world, exp)){
 					world.spawnEntity(exp);
-		    		
+
 		    		EntityCloudFleijaRainbow cloud = new EntityCloudFleijaRainbow(world, size);
 		    		cloud.posX = pos.getX();
 		    		cloud.posY = pos.getY();
@@ -308,160 +486,160 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 			} else {
 				if(overload > 0) overload = 0;
 			}*/
-			ItemStack catalystA = inventory.getStackInSlot(0);
-			ItemStack catalystB = inventory.getStackInSlot(2);
-			NBTTagCompound tagA = null;
-			NBTTagCompound tagB = null;
-			double damageA = 100;
-			double damageB = 100;
-			if (catalystA.getItem() instanceof ItemCatalyst && catalystB.getItem() instanceof ItemCatalyst) {
-				LeafiaColor col = new LeafiaColor(calcAvgHex(
-						((ItemCatalyst) catalystA.getItem()).getColor(),
-						((ItemCatalyst) catalystB.getItem()).getColor()
-				));
-				colorCatalyst = col.toInARGB();
-				tagA = catalystA.getTagCompound();
-				tagB = catalystB.getTagCompound();
-				if (tagA == null) {
-					tagA = new NBTTagCompound();
-					catalystA.setTagCompound(tagA);
-				}
-				if (tagB == null) {
-					tagB = new NBTTagCompound();
-					catalystB.setTagCompound(tagB);
-				}
-				damageA = tagA.getDouble("damage");
-				damageB = tagB.getDouble("damage");
-				color = col.lerp(new LeafiaColor(
-						world.rand.nextFloat(), world.rand.nextFloat(), world.rand.nextFloat()
-				), Math.pow(Math.max(damageA / 100, damageB / 100), 2)).toInARGB();
-				hasCore = true;
-			} else {
-				color = 0;
-				hasCore = false;
+		ItemStack catalystA = inventory.getStackInSlot(0);
+		ItemStack catalystB = inventory.getStackInSlot(2);
+		NBTTagCompound tagA = null;
+		NBTTagCompound tagB = null;
+		double damageA = 100;
+		double damageB = 100;
+		if (catalystA.getItem() instanceof ItemCatalyst && catalystB.getItem() instanceof ItemCatalyst) {
+			LeafiaColor col = new LeafiaColor(calcAvgHex(
+					((ItemCatalyst) catalystA.getItem()).getColor(),
+					((ItemCatalyst) catalystB.getItem()).getColor()
+			));
+			colorCatalyst = col.toInARGB();
+			tagA = catalystA.getTagCompound();
+			tagB = catalystB.getTagCompound();
+			if (tagA == null) {
+				tagA = new NBTTagCompound();
+				catalystA.setTagCompound(tagA);
 			}
-			expellingSpk = 0;
+			if (tagB == null) {
+				tagB = new NBTTagCompound();
+				catalystB.setTagCompound(tagB);
+			}
+			damageA = tagA.getDouble("damage");
+			damageB = tagB.getDouble("damage");
+			color = col.lerp(new LeafiaColor(
+					world.rand.nextFloat(), world.rand.nextFloat(), world.rand.nextFloat()
+			), Math.pow(Math.max(damageA / 100, damageB / 100), 2)).toInARGB();
+			hasCore = true;
+		} else {
+			color = 0;
+			hasCore = false;
+		}
+		expellingSpk = 0;
 
-			if (inventory.getStackInSlot(1).getItem() instanceof ItemAMSCore || inventory.getStackInSlot(1).getItem() == ModItems.glitch /*&& tanks[0].getFluid() != null && tanks[1].getFluid() != null*/) {
-				if (tagA != null && tagB != null) {
-					meltingPoint = Math.min(1500000, Math.min(ItemCatalyst.getMelting(catalystA), ItemCatalyst.getMelting(catalystB)));
+		if (inventory.getStackInSlot(1).getItem() instanceof ItemAMSCore || inventory.getStackInSlot(1).getItem() == ModItems.glitch /*&& tanks[0].getFluid() != null && tanks[1].getFluid() != null*/) {
+			if (tagA != null && tagB != null) {
+				meltingPoint = Math.min(1500000, Math.min(ItemCatalyst.getMelting(catalystA), ItemCatalyst.getMelting(catalystB)));
 
-					double corePower = getCorePower();
-					double coreHeatMod = getCoreHeat();
-					double coreInefficiency = getCoreFuel();
-					//1 SPK = 5,000HE
-					long catalystPower = ItemCatalyst.getPowerAbs(catalystA) + ItemCatalyst.getPowerAbs(catalystB);
-					float catalystPowerMod = ItemCatalyst.getPowerMod(catalystA) * ItemCatalyst.getPowerMod(catalystB);
-					float catalystHeatMod = ItemCatalyst.getHeatMod(catalystA) * ItemCatalyst.getHeatMod(catalystB);
-					float catalystFuelMod = ItemCatalyst.getFuelMod(catalystA) * ItemCatalyst.getFuelMod(catalystB);
-					double catalystPowerSPK = catalystPower / 5000d;
-					FluidStack f1s = tanks[0].getFluid();
-					FluidStack f2s = tanks[1].getFluid();
-					Fluid f1;
-					Fluid f2;
-					if (f1s == null) f1 = ModForgeFluids.DEUTERIUM; else f1 = f1s.getFluid();
-					if (f2s == null) f2 = ModForgeFluids.TRITIUM; else f2 = f2s.getFluid();
-					double fill0 = tanks[0].getFluidAmount()/(double)tanks[0].getCapacity();
-					double fill1 = tanks[1].getFluidAmount()/(double)tanks[1].getCapacity();
-					double fuelPower = ModFluidProperties.getDFCEfficiency(f1) * ModFluidProperties.getDFCEfficiency(f2);
+				double corePower = getCorePower();
+				double coreHeatMod = getCoreHeat();
+				double coreInefficiency = getCoreFuel();
+				//1 SPK = 5,000HE
+				long catalystPower = ItemCatalyst.getPowerAbs(catalystA) + ItemCatalyst.getPowerAbs(catalystB);
+				float catalystPowerMod = ItemCatalyst.getPowerMod(catalystA) * ItemCatalyst.getPowerMod(catalystB);
+				float catalystHeatMod = ItemCatalyst.getHeatMod(catalystA) * ItemCatalyst.getHeatMod(catalystB);
+				float catalystFuelMod = ItemCatalyst.getFuelMod(catalystA) * ItemCatalyst.getFuelMod(catalystB);
+				double catalystPowerSPK = catalystPower / 5000d;
+				FluidStack f1s = tanks[0].getFluid();
+				FluidStack f2s = tanks[1].getFluid();
+				Fluid f1;
+				Fluid f2;
+				if (f1s == null) f1 = ModForgeFluids.DEUTERIUM; else f1 = f1s.getFluid();
+				if (f2s == null) f2 = ModForgeFluids.TRITIUM; else f2 = f2s.getFluid();
+				double fill0 = tanks[0].getFluidAmount()/(double)tanks[0].getCapacity();
+				double fill1 = tanks[1].getFluidAmount()/(double)tanks[1].getCapacity();
+				double fuelPower = ModFluidProperties.getDFCEfficiency(f1) * ModFluidProperties.getDFCEfficiency(f2);
 
-					double tempRatio = temperature/meltingPoint;
-					double energyRatio = containedEnergy/maxEnergy;
+				double tempRatio = temperature/meltingPoint;
+				double energyRatio = containedEnergy/maxEnergy;
 
-					ticks++;
-					//LeafiaDebug.debugLog(world,"incomingSpk: "+incomingSpk);
+				ticks++;
+				//LeafiaDebug.debugLog(world,"incomingSpk: "+incomingSpk);
 
-					Tracker._startProfile(this,"NeoTick");
-					{
-						potentialGain = energyMod; //Math.max(0,Math.pow(energyMod,0.75));
-						if (temperature >= 100) {
-							double randRange = Math.pow(tempRatio,0.65)*10;
-							potentialGain += world.rand.nextDouble()*randRange/getStabilizationDivAlt()/getStabilizationDiv() + Math.pow(collapsing,0.666)*66;
-						}
+				Tracker._startProfile(this,"NeoTick");
+				{
+					potentialGain = energyMod; //Math.max(0,Math.pow(energyMod,0.75));
+					if (temperature >= 100) {
+						double randRange = Math.pow(tempRatio,0.65)*10;
+						potentialGain += world.rand.nextDouble()*randRange/getStabilizationDivAlt()/getStabilizationDiv() + Math.pow(collapsing,0.666)*66;
 					}
-					{ // i wanted to redo everything this sucks ASS
-						//containedEnergy += incomingSpk;
-						double combustionPotential = Math.pow(energyRatio,0.25);
-						int consumption = (int)Math.ceil(Math.pow(incomingSpk*catalystFuelMod*getCoreFuel(),0.5));//(int)(combustionPotential*100);
-						Tracker._tracePosition(this,pos.up(3),"incomingSpk: ",incomingSpk);
-						tanks[0].drain(consumption,true);
-						tanks[1].drain(consumption,true);
-						//Tracker._tracePosition(this,pos.east(6),"combustionPotential: "+combustionPotential,"cons: "+consumption);
+				}
+				{ // i wanted to redo everything this sucks ASS
+					//containedEnergy += incomingSpk;
+					double combustionPotential = Math.pow(energyRatio,0.25);
+					int consumption = (int)Math.ceil(Math.pow(incomingSpk*catalystFuelMod*getCoreFuel(),0.5));//(int)(combustionPotential*100);
+					Tracker._tracePosition(this,pos.up(3),"incomingSpk: ",incomingSpk);
+					tanks[0].drain(consumption,true);
+					tanks[1].drain(consumption,true);
+					//Tracker._tracePosition(this,pos.east(6),"combustionPotential: "+combustionPotential,"cons: "+consumption);
 
-						//Tracker._tracePosition(this,pos.down(3),"potAdd: "+potAdd,"potSub: "+potSub,"","potMul:"+potMul,"Total: "+potFinal);
-						//Tracker._tracePosition(this,pos.down(4),"potAbsorb: "+potAbsorb);
-						double boost = catalystPowerMod*energyMod;
-						double deltaEnergy = (Math.pow(Math.pow(incomingSpk, 0.666/2) + 1, 0.666/2) - 1) * 6.666 / 3 * Math.pow(1.2,potentialGain);
-						double addition0 = (deltaEnergy*corePower+Math.pow(Math.max(0,incomingSpk-deltaEnergy),0.9))*boost*fill0*fill1/666;
-						//containedEnergy += Math.pow(Math.min(temperature,10000)/100,1.2)*potentialRelease*boost*fill0*fill1;
-						double addition1 = Math.pow(Math.min(temperature,10000)/100,0.75)*corePower*potentialGain*boost*fill0*fill1*fuelPower/20 * Math.pow(0.9,potentialGain);
-						addition0 = Math.max(addition0,0);
-						addition1 = Math.max(addition1,0);
-						containedEnergy = Math.min(Math.min(containedEnergy+addition0,failsafeLevel)+addition1,failsafeLevel);
-						LeafiaDebug.debugLog(world,"");
-						LeafiaDebug.debugLog(world,"Contained: "+containedEnergy);
-						//containedEnergy += Math.pow(Math.min(tempRatio,3),3)*100;
-						double tgtTemp = temperature;
-						//tgtTemp = Math.max(0,temperature-(1-energyRatio)*100*(Math.pow(tempRatio,2)+0.001));
-						//temperature += Math.pow(deltaEnergy,0.1*Math.pow(potentialRelease,0.8))*100*catalystHeatMod*coreHeatMod;
+					//Tracker._tracePosition(this,pos.down(3),"potAdd: "+potAdd,"potSub: "+potSub,"","potMul:"+potMul,"Total: "+potFinal);
+					//Tracker._tracePosition(this,pos.down(4),"potAbsorb: "+potAbsorb);
+					double boost = catalystPowerMod*energyMod;
+					double deltaEnergy = (Math.pow(Math.pow(incomingSpk, 0.666/2) + 1, 0.666/2) - 1) * 6.666 / 3 * Math.pow(1.2,potentialGain);
+					double addition0 = (deltaEnergy*corePower+Math.pow(Math.max(0,incomingSpk-deltaEnergy),0.9))*boost*fill0*fill1/666;
+					//containedEnergy += Math.pow(Math.min(temperature,10000)/100,1.2)*potentialRelease*boost*fill0*fill1;
+					double addition1 = Math.pow(Math.min(temperature,10000)/100,0.75)*corePower*potentialGain*boost*fill0*fill1*fuelPower/20 * Math.pow(0.9,potentialGain);
+					addition0 = Math.max(addition0,0);
+					addition1 = Math.max(addition1,0);
+					containedEnergy = Math.min(Math.min(containedEnergy+addition0,failsafeLevel)+addition1,failsafeLevel);
+					LeafiaDebug.debugLog(world,"");
+					LeafiaDebug.debugLog(world,"Contained: "+containedEnergy);
+					//containedEnergy += Math.pow(Math.min(tempRatio,3),3)*100;
+					double tgtTemp = temperature;
+					//tgtTemp = Math.max(0,temperature-(1-energyRatio)*100*(Math.pow(tempRatio,2)+0.001));
+					//temperature += Math.pow(deltaEnergy,0.1*Math.pow(potentialRelease,0.8))*100*catalystHeatMod*coreHeatMod;
 
-						//temperature = Math.pow(temperature,0.9);
-						tgtTemp += Math.pow(deltaEnergy*666*catalystHeatMod,2/(1+stabilization))*(1-tempRatio/2)*coreHeatMod*Math.pow(potentialGain,0.25);//Math.pow(deltaEnergy,0.1)*5*Math.pow(potentialRelease,1.5);
-
-
-
-
-						Tracker._tracePosition(this,pos.down(3),"containedEnergy: ",containedEnergy);
-						Tracker._tracePosition(this,pos.down(4),"deltaEnergy: ",deltaEnergy);
-
-						double absorbDiv = 0.001;
-						for (TileEntityCoreReceiver absorber : absorbers)
-							absorbDiv += absorber.level;
+					//temperature = Math.pow(temperature,0.9);
+					tgtTemp += Math.pow(deltaEnergy*666*catalystHeatMod,2/(1+stabilization))*(1-tempRatio/2)*coreHeatMod*Math.pow(potentialGain,0.25);//Math.pow(deltaEnergy,0.1)*5*Math.pow(potentialRelease,1.5);
 
 
-						double collapseAddition = Math.pow(collapsing,2)*500_000;
-						containedEnergy += Math.max(collapseAddition-addition0-addition1,0);
 
-						containedEnergy = Math.min(containedEnergy,failsafeLevel);
 
-						gainedEnergy = containedEnergy;
-						LeafiaDebug.debugLog(world,"Contained 2: "+containedEnergy);
+					Tracker._tracePosition(this,pos.down(3),"containedEnergy: ",containedEnergy);
+					Tracker._tracePosition(this,pos.down(4),"deltaEnergy: ",deltaEnergy);
 
-						double absorbed = Math.pow(containedEnergy,0.75+0.25*(1-1/(1+absorbDiv)))*absorbDiv;
-						double transferred = 0;
-						for (TileEntityCoreReceiver absorber : absorbers) {
-							if (finalPhase) {
-								absorber.explode();
-								continue;
-							}
-							long absorb = (long)(absorbed/absorbDiv*absorber.level*1000_000);
-							containedEnergy -= absorb/1000_000d;
-							transferred += absorb/1000_000d;
-							double val = (catalystPower*Math.pow(tempRatio,0.1)+incomingSpk*2000_000)/absorbDiv*absorber.level;
-							val = Math.min(val,Long.MAX_VALUE);
-							absorber.joules += absorb + (long)val;
+					double absorbDiv = 0.001;
+					for (TileEntityCoreReceiver absorber : absorbers)
+						absorbDiv += absorber.level;
+
+
+					double collapseAddition = Math.pow(collapsing,2)*500_000;
+					containedEnergy += Math.max(collapseAddition-addition0-addition1,0);
+
+					containedEnergy = Math.min(containedEnergy,failsafeLevel);
+
+					gainedEnergy = containedEnergy;
+					LeafiaDebug.debugLog(world,"Contained 2: "+containedEnergy);
+
+					double absorbed = Math.pow(containedEnergy,0.75+0.25*(1-1/(1+absorbDiv)))*absorbDiv;
+					double transferred = 0;
+					for (TileEntityCoreReceiver absorber : absorbers) {
+						if (finalPhase) {
+							absorber.explode();
+							continue;
 						}
-						expellingSpk = transferred;
-						expelTicks[Math.floorMod(ticks, 20)] = expellingSpk;
-						containedEnergy = Math.max(containedEnergy,0);
-						LeafiaDebug.debugLog(world,"Contained 3: "+containedEnergy);
-						double targetEnergy = Math.pow(containedEnergy,0.99);
-						double rdc = 1-energyRatio;
-						tgtTemp -= Math.pow(Math.abs(rdc),0.5)*Math.signum(rdc)*tempRatio;//*10;
-						//double deltaSubEnergy = containedEnergy-targetEnergy; what's the point??
-						//Tracker._tracePosition(this,pos.down(5),"deltaSubEnergy: ",deltaSubEnergy);
-						//containedEnergy -= deltaSubEnergy*Math.pow(Math.max(0,1-energyRatio),0.25);
+						long absorb = (long)(absorbed/absorbDiv*absorber.level*1000_000);
+						containedEnergy -= absorb/1000_000d;
+						transferred += absorb/1000_000d;
+						double val = (catalystPower*Math.pow(tempRatio,0.1)+incomingSpk*2000_000)/absorbDiv*absorber.level;
+						val = Math.min(val,Long.MAX_VALUE);
+						absorber.joules += absorb + (long)val;
+					}
+					expellingSpk = transferred;
+					expelTicks[Math.floorMod(ticks, 20)] = expellingSpk;
+					containedEnergy = Math.max(containedEnergy,0);
+					LeafiaDebug.debugLog(world,"Contained 3: "+containedEnergy);
+					double targetEnergy = Math.pow(containedEnergy,0.99);
+					double rdc = 1-energyRatio;
+					tgtTemp -= Math.pow(Math.abs(rdc),0.5)*Math.signum(rdc)*tempRatio;//*10;
+					//double deltaSubEnergy = containedEnergy-targetEnergy; what's the point??
+					//Tracker._tracePosition(this,pos.down(5),"deltaSubEnergy: ",deltaSubEnergy);
+					//containedEnergy -= deltaSubEnergy*Math.pow(Math.max(0,1-energyRatio),0.25);
 
-						tgtTemp -= Math.max(0,Math.pow(temperature/meltingPoint,4)*temperature*getStabilizationDivAlt())*(0.5+(Math.pow(Math.abs(rdc),0.01)*Math.signum(rdc))/2);
-						tgtTemp = Math.min(Math.max(tgtTemp,0),5000000);
-						double deltaTemp = tgtTemp-temperature;
-						if (!finalPhase) {
-							double limit = 1000+world.rand.nextInt(1000) + world.rand.nextDouble();
-							temperature += Math.min(Math.pow(Math.abs(deltaTemp),0.5)*Math.signum(deltaTemp),limit);
-						} else {
-							temperature = temperature + world.rand.nextInt(5000)+10000 + world.rand.nextDouble();
-						}
-						temperature = Math.max(temperature,0);
+					tgtTemp -= Math.max(0,Math.pow(temperature/meltingPoint,4)*temperature*getStabilizationDivAlt())*(0.5+(Math.pow(Math.abs(rdc),0.01)*Math.signum(rdc))/2);
+					tgtTemp = Math.min(Math.max(tgtTemp,0),5000000);
+					double deltaTemp = tgtTemp-temperature;
+					if (!finalPhase) {
+						double limit = 1000+world.rand.nextInt(1000) + world.rand.nextDouble();
+						temperature += Math.min(Math.pow(Math.abs(deltaTemp),0.5)*Math.signum(deltaTemp),limit);
+					} else {
+						temperature = temperature + world.rand.nextInt(5000)+10000 + world.rand.nextDouble();
+					}
+					temperature = Math.max(temperature,0);
 						/*
 
 						for (TileEntityCoreReceiver absorber : absorbers) {
@@ -470,38 +648,38 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						expellingSpk = expelling;
 						expelTicks[Math.floorMod(ticks, 20)] = expelling;
 						 */
-						if (shockCooldown > 0) shockCooldown--;
-						double energyPerShock = 300_000*0.75;
-						if (containedEnergy >= 100_000*(world.rand.nextInt(150)+6.66)+0.5 && shockCooldown <= 0) {
-							double count = Math.ceil(containedEnergy/energyPerShock);
-							for (int i = 0; i < Math.pow(count,0.25); i++) shock();
-							world.playSound(null,pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5,HBMSoundEvents.mus_sfx_a_lithit,SoundCategory.BLOCKS,6.66f,1+(float)world.rand.nextGaussian()*0.1f);
-							PacketDispatcher.wrapper.sendToAllAround(
-									new CommandLeaf.ShakecamPacket(new String[]{
-											"type=smooth",
-											"preset=RUPTURE",
-											"duration/4",
-											"blurDulling*2",
-											"intensity/2",
-											"range=50"
-									}).setPos(pos),
-									new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 100)
-							);
-							PacketDispatcher.wrapper.sendToAllAround(
-									new CommandLeaf.ShakecamPacket(new String[]{
-											"type=smooth",
-											"preset=QUAKE",
-											"duration/2",
-											"intensity/4",
-											"range=100"
-									}).setPos(pos),
-									new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 150)
-							);
-							containedEnergy = Math.max(containedEnergy-count*energyPerShock,0);
-							shockCooldown = 100-(int)(90*Math.pow(collapsing,1.75));
-						}
+					if (shockCooldown > 0) shockCooldown--;
+					double energyPerShock = 300_000*0.75;
+					if (containedEnergy >= 100_000*(world.rand.nextInt(150)+6.66)+0.5 && shockCooldown <= 0) {
+						double count = Math.ceil(containedEnergy/energyPerShock);
+						for (int i = 0; i < Math.pow(count,0.25); i++) shock();
+						world.playSound(null,pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5,HBMSoundEvents.mus_sfx_a_lithit,SoundCategory.BLOCKS,6.66f,1+(float)world.rand.nextGaussian()*0.1f);
+						PacketDispatcher.wrapper.sendToAllAround(
+								new CommandLeaf.ShakecamPacket(new String[]{
+										"type=smooth",
+										"preset=RUPTURE",
+										"duration/4",
+										"blurDulling*2",
+										"intensity/2",
+										"range=50"
+								}).setPos(pos),
+								new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 100)
+						);
+						PacketDispatcher.wrapper.sendToAllAround(
+								new CommandLeaf.ShakecamPacket(new String[]{
+										"type=smooth",
+										"preset=QUAKE",
+										"duration/2",
+										"intensity/4",
+										"range=100"
+								}).setPos(pos),
+								new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 150)
+						);
+						containedEnergy = Math.max(containedEnergy-count*energyPerShock,0);
+						shockCooldown = 100-(int)(90*Math.pow(collapsing,1.75));
 					}
-					Tracker._endProfile(this);
+				}
+				Tracker._endProfile(this);
 					/*
 					if (false) {
 
@@ -564,198 +742,32 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 						expelTicks[Math.floorMod(ticks, 20)] = expelling;
 
 					}*/
-					double timeToMeltdown = 10;
-					double timeToRegen = 30;
-					tagA.setDouble("damage", MathHelper.clamp(damageA
-									+ (temperature >= ItemCatalyst.getMelting(catalystA) ? 5 / timeToMeltdown : -5 / timeToRegen),
-							0, 100
-					));
-					tagB.setDouble("damage", MathHelper.clamp(damageB
-									+ (temperature >= ItemCatalyst.getMelting(catalystB) ? 5 / timeToMeltdown : -5 / timeToRegen),
-							0, 100
-					));
-				}
+				double timeToMeltdown = 10;
+				double timeToRegen = 30;
+				tagA.setDouble("damage", MathHelper.clamp(damageA
+								+ (temperature >= ItemCatalyst.getMelting(catalystA) ? 5 / timeToMeltdown : -5 / timeToRegen),
+						0, 100
+				));
+				tagB.setDouble("damage", MathHelper.clamp(damageB
+								+ (temperature >= ItemCatalyst.getMelting(catalystB) ? 5 / timeToMeltdown : -5 / timeToRegen),
+						0, 100
+				));
 			}
-			if ((damageA >= 100 || damageB >= 100) && temperature > 100 || finalPhase) {
-				EntityNukeExplosionMK3 exp = null;
-				if (jammerPos != null) {
-					if (!(world.getBlockState(jammerPos).getBlock() instanceof MachineFieldDisturber))
-						jammerPos = null;
-				}
-				if (explosionIn < 10 || jammerPos == null) { // stand by
-					exp = new EntityNukeExplosionMK3(world);
-					exp.posX = pos.getX();
-					exp.posY = pos.getY();
-					exp.posZ = pos.getZ();
-					exp.destructionRange = 20+(int)Math.pow(temperature,0.4);
-					exp.speed = 25;
-					exp.coefficient = 1.0F;
-					exp.waste = false;
-				}
-				if (jammerPos == null) {
-					if (overloadTimer <= 20*6 && MachineConfig.dfcInitialBlast) {
-						if (overloadTimer == 0) {
-							LeafiaPacket._start(this)
-									.__write(packetKeys.PLAY_SOUND.key, 2)
-									.__sendToAll();
-						}
-						overloadTimer++;
-					} else {
-						world.playSound(null, pos.getX()+0.5f, pos.getY()+0.5f, pos.getZ()+0.5f, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 100000.0F, 1.0F);
+		}
 
-						if (MachineConfig.dfcInitialBlast) {
-							world.playSound(null,pos.getX()+0.5f,pos.getY()+0.5f,pos.getZ()+0.5f,HBMSoundEvents.actualexplosion,SoundCategory.BLOCKS,50.0F,1.0F);
-							PacketDispatcher.wrapper.sendToAllAround(
-									new CommandLeaf.ShakecamPacket(new String[]{
-											"type=smooth",
-											"preset=RUPTURE",
-											"blurDulling*2",
-											"speed*1.5",
-											"duration/2",
-											"range=300"
-									}).setPos(pos),
-									new NetworkRegistry.TargetPoint(world.provider.getDimension(),pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5,400)
-							);
-							LeafiaColor col = new LeafiaColor(colorCatalyst);
-							DFCBlastParticle blast = new DFCBlastParticle((float) col.red,(float) col.green,(float) col.blue,250);
-							blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
+		handleOverloadAndExplosion(damageA,damageB);
 
-							ExplosionNT nt = new ExplosionNT(world,null,pos.getX()+0.5f,pos.getY()+0.5f,pos.getZ()+0.5f,50);
-							nt.maxExplosionResistance = 28;
-							nt.iterationLimit = 150;
-							nt.ignoreBlockPoses.add(pos);
-							nt.explode();
-						}
+		expellingEnergy = 0;
+		for (double energy : expelTicks)
+			expellingEnergy += energy;
+		wasBoosted = incomingSpk > 0;
+		incomingSpk = 0;
+		energyMod = 1;
+		absorbers.clear();
 
-						if (!EntityNukeExplosionMK3.isJammed(this.world, exp)) {
-							destroyed = true;
-							world.spawnEntity(exp);
-							EntityCloudFleijaRainbow cloud = new EntityCloudFleijaRainbow(world, exp.destructionRange);
-							cloud.posX = pos.getX();
-							cloud.posY = pos.getY();
-							cloud.posZ = pos.getZ();
-							world.spawnEntity(cloud);
-						} else {
-							jammerPos = EntityNukeExplosionMK3.lastDetectedJammer;
-							if (explosionIn < 0) {
-								explosionIn = 120;
-								explosionClock = System.currentTimeMillis();
-								LeafiaPacket._start(this)
-										.__write(packetKeys.PLAY_SOUND.key, 0)
-										.__sendToAll();
-							}
-						}
-					}
-				}
-				if (jammerPos != null) {
-					boolean tick = true;
-					MinecraftServer server = world.getMinecraftServer();
-					if (server != null) {
-						//LeafiaDebug.debugLog(world, "isSinglePlayer: " + server.isSinglePlayer());
-						//LeafiaDebug.debugLog(world, "isServerInOnlineMode: " + server.isServerInOnlineMode());
-						//LeafiaDebug.debugLog(world, "isDedicatedServer: " + server.isDedicatedServer());
-						//LeafiaDebug.debugLog(world, TextFormatting.GOLD + "Time Left: " + explosionIn);
-						if (!server.isDedicatedServer())
-							tick = !Minecraft.getMinecraft().isGamePaused();
-					}
-					if (tick) {
-						long time = System.currentTimeMillis();
-						explosionIn = Math.max(explosionIn - (time - explosionClock) / 1000d, 0);
-						collapsing = MathHelper.clamp(1-explosionIn/120,0,1);
-						explosionClock = time;
-						if (explosionIn <= 15 && !finalPhase && MachineConfig.dfcFinalPhase) {
-							finalPhase = true;
-							PacketDispatcher.wrapper.sendToAllAround(
-									new CommandLeaf.ShakecamPacket(new String[]{
-											"type=smooth",
-											"preset=RUPTURE",
-											"blurDulling*2",
-											"speed*1.5",
-											"duration/2",
-											"range=300"
-									}).setPos(pos),
-									new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 400)
-							);
-							PacketDispatcher.wrapper.sendToAllAround(
-									new CommandLeaf.ShakecamPacket(new String[]{
-											"type=smooth",
-											"preset=QUAKE",
-											"blurDulling*4",
-											"speed*3",
-											"duration=40",
-											"range=300"
-									}).setPos(pos),
-									new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 400)
-							);
-							LeafiaPacket._start(this)
-									.__write(packetKeys.PLAY_SOUND.key, 3)
-									.__sendToAll();
-
-							ExplosionNT nt = new ExplosionNT(world,null,pos.getX()+0.5f, pos.getY()+0.5f, pos.getZ()+0.5f,150);
-							nt.iterationLimit = 150;
-							nt.overrideResolution(24);
-							nt.ignoreBlockPoses.add(pos);
-							nt.addAttrib(ExAttrib.FIRE);
-							nt.addAttrib(ExAttrib.DFC_FALL);
-							nt.explode();
-							LeafiaColor col = new LeafiaColor(colorCatalyst);
-							DFCBlastParticle blast = new DFCBlastParticle((float)col.red,(float)col.green,(float)col.blue,250);
-							blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
-						}
-						if (finalPhase) {
-							LeafiaColor col = new LeafiaColor(colorCatalyst);
-							DFCBlastParticle blast = new DFCBlastParticle((float)col.red,(float)col.green,(float)col.blue,20);
-							blast.emit(new Vec3d(pos).add(0.5,0.5,0.5),new Vec3d(0,1,0),world.provider.getDimension(),200);
-						}
-						if (explosionIn <= 0 && exp != null) {
-							PacketDispatcher.wrapper.sendToAllAround(
-									new CommandLeaf.ShakecamPacket(new String[]{
-											"type=smooth",
-											"preset=PWR_NEAR",
-											"duration*2",
-											"intensity*1.5",
-											"range=200"
-									}).setPos(pos),
-									new NetworkRegistry.TargetPoint(world.provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 300)
-							);
-							world.playSound(null, pos, HBMSoundEvents.dfc_explode, SoundCategory.BLOCKS, 100, 1);
-							destroyed = true;
-							world.spawnEntity(exp);
-							EntityCloudFleijaRainbow cloud = new EntityCloudFleijaRainbow(world, exp.destructionRange);
-							cloud.posX = pos.getX();
-							cloud.posY = pos.getY();
-							cloud.posZ = pos.getZ();
-							world.spawnEntity(cloud);
-						}
-					}
-				}
-			} else {
-				if (explosionIn >= 0) {
-					jammerPos = null;
-					explosionIn = -1;
-					collapsing = 0;
-					LeafiaPacket._start(this)
-							.__write(packetKeys.PLAY_SOUND.key, 1)
-							.__sendToAll();
-				} else if (overloadTimer > 0) {
-					LeafiaPacket._start(this)
-							.__write(packetKeys.PLAY_SOUND.key, 1)
-							.__sendToAll();
-					overloadTimer = 0;
-				}
-			}
-
-			expellingEnergy = 0;
-			for (double energy : expelTicks)
-				expellingEnergy += energy;
-			wasBoosted = incomingSpk > 0;
-			incomingSpk = 0;
-			energyMod = 1;
-			absorbers.clear();
-
-			if (temperature > 100) {
-				vaporization();
-			}
+		if (temperature > 100) {
+			vaporization();
+		}
 			/*
 			NBTTagCompound data = new NBTTagCompound();
 			data.setString("tank0", tanks[0].getFluid() == null ? "HBM_EMPTY" : tanks[0].getFluid().getFluid().getName());
@@ -768,50 +780,50 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 			data.setBoolean("hasCore", hasCore);
 			networkPack(data, 250);
 			*/
-			//PacketDispatcher.wrapper.sendToAllAround(new FluidTankPacket(pos, tanks), new TargetPoint(world.provider.getDimension(), pos.getX(), pos.getY(), pos.getZ(), 10));
-			NBTTagCompound fluidA = new NBTTagCompound();
-			NBTTagCompound fluidB = new NBTTagCompound();
-			tanks[0].writeToNBT(fluidA);
-			tanks[1].writeToNBT(fluidB);
-			Integer coreId = null;
-			try {
-				coreId = Cores.valueOf(inventory.getStackInSlot(1).getItem().getRegistryName().getPath()).ordinal();
-			} catch (IllegalArgumentException | NullPointerException ignored) {
-			} // fuck you im lazy
-			LeafiaPacket._start(this)
-					.__write(packetKeys.TANK_A.key, fluidA)
-					.__write(packetKeys.TANK_B.key, fluidB)
+		//PacketDispatcher.wrapper.sendToAllAround(new FluidTankPacket(pos, tanks), new TargetPoint(world.provider.getDimension(), pos.getX(), pos.getY(), pos.getZ(), 10));
+		NBTTagCompound fluidA = new NBTTagCompound();
+		NBTTagCompound fluidB = new NBTTagCompound();
+		tanks[0].writeToNBT(fluidA);
+		tanks[1].writeToNBT(fluidB);
+		Integer coreId = null;
+		try {
+			coreId = Cores.valueOf(inventory.getStackInSlot(1).getItem().getRegistryName().getPath()).ordinal();
+		} catch (IllegalArgumentException | NullPointerException ignored) {
+		} // fuck you im lazy
+		LeafiaPacket._start(this)
+				.__write(packetKeys.TANK_A.key, fluidA)
+				.__write(packetKeys.TANK_B.key, fluidB)
 
-					.__write(packetKeys.TEMP.key, temperature)
-					.__write(packetKeys.STABILIZATION.key, stabilization)
-					.__write(packetKeys.CONTAINED.key, containedEnergy/* gainedEnergy + bonus * bonus*/) // wtf?
-					.__write(packetKeys.EXPELLING.key, expellingEnergy)
-					.__write(packetKeys.POTENTIAL.key,potentialGain)
+				.__write(packetKeys.TEMP.key, temperature)
+				.__write(packetKeys.STABILIZATION.key, stabilization)
+				.__write(packetKeys.CONTAINED.key, containedEnergy/* gainedEnergy + bonus * bonus*/) // wtf?
+				.__write(packetKeys.EXPELLING.key, expellingEnergy)
+				.__write(packetKeys.POTENTIAL.key,potentialGain)
 
-					.__write(packetKeys.EXPEL_TICK.key, expellingSpk)
-					.__write(packetKeys.MAXIMUM.key, meltingPoint)
+				.__write(packetKeys.EXPEL_TICK.key, expellingSpk)
+				.__write(packetKeys.MAXIMUM.key, meltingPoint)
 
-					.__write(packetKeys.COLOR.key, color)
-					.__write(packetKeys.COLOR_CATALYST.key, colorCatalyst)
-					.__write(packetKeys.CORE_TYPE.key, coreId)
+				.__write(packetKeys.COLOR.key, color)
+				.__write(packetKeys.COLOR_CATALYST.key, colorCatalyst)
+				.__write(packetKeys.CORE_TYPE.key, coreId)
 
-					.__write(packetKeys.JAMMER.key, jammerPos)
-					.__write(packetKeys.COLLAPSE.key, collapsing)
+				.__write(packetKeys.JAMMER.key, jammerPos)
+				.__write(packetKeys.COLLAPSE.key, collapsing)
 
-					.__write(packetKeys.HASCORE.key,hasCore)
+				.__write(packetKeys.HASCORE.key,hasCore)
 
-					.__sendToAffectedClients();
+				.__sendToAffectedClients();
 
-			heat = 0;
-			stabilization = 0;
-			if (this.collapsing > 0) {
-				List<Entity> list = world.getEntitiesWithinAABBExcludingEntity(null,LeafiaUtil.getAABBRadius(LeafiaUtil.getBlockPosCenter(this.pos),getPullRange()));
-				for (Entity e : list) {
-					if (!(e instanceof EntityFallingBlock))
-						pull(e);
-				}
+		heat = 0;
+		stabilization = 0;
+		if (this.collapsing > 0) {
+			List<Entity> list = world.getEntitiesWithinAABBExcludingEntity(null,LeafiaUtil.getAABBRadius(LeafiaUtil.getBlockPosCenter(this.pos),getPullRange()));
+			for (Entity e : list) {
+				if (!(e instanceof EntityFallingBlock))
+					pull(e);
 			}
-			this.markDirty();
+		}
+		this.markDirty();
 			/*testDebug++;
 			if (testDebug > 30) {
 				testDebug = 0;
@@ -819,55 +831,58 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 				shock();
 				shock();
 			}*/
-		} else {
-			ticks++;
-			client_maxDial = world.rand.nextDouble() * 0.08 + 0.9;
-
-			if (client_sfx != null) {
-				if (temperature >= 100 && !sfxPlaying) {
-					sfxPlaying = true;
-					client_sfx.startSound();
-				} else if (temperature < 100 && sfxPlaying) {
-					sfxPlaying = false;
-					client_sfx.stopSound();
-				}
-			}
-			if (collapsing > 0.666)
-				pullLocal();
-			for (DFCShock shock : dfcShocks) {
-				shock.ticks++;
-			}
-			while (!dfcShocks.isEmpty()) {
-				if (dfcShocks.get(0).ticks > 4)
-					dfcShocks.remove(0);
-				else break;
-			}
-			if (temperature > 100) {
-				if (client_type == Cores.ams_core_eyeofharmony) {
-					float r = (color>>16&255)/255F;
-					float g = (color>>8&255)/255F;
-					float b = (color&255)/255F;
-					float scale = (float) Math.log(temperature/50+1);
-					ParticleEyeOfHarmony fx = new ParticleEyeOfHarmony(world,pos,r,g,b,scale);
-					Minecraft.getMinecraft().effectRenderer.addEffect(fx);
-					angle = angle + lightRotateSpeed;
-					if (angle > 360)
-						angle -= 360;
-				}
-			}
-			ringSpinSpeed = 360/20f;
-			//if (120-collapsing*120 <= 15)
-			//	finalPhase = true;
-			if (collapsing > 0.95) {
-				double percent = (collapsing-0.95)/0.05;
-				ringSpinSpeed += 10800/20f*(float)percent;
-			}
-			if (finalPhase) {
-				ringAlpha = MathHelper.clamp(ringAlpha+0.025f,0,1);
-			}
-			ringAngle = MathHelper.positiveModulo(ringAngle+ringSpinSpeed,360);
-		}
 	}
+
+	@SideOnly(Side.CLIENT)
+	public void tickClient() {
+		ticks++;
+		client_maxDial = world.rand.nextDouble() * 0.08 + 0.9;
+
+		if (client_sfx != null) {
+			if (temperature >= 100 && !sfxPlaying) {
+				sfxPlaying = true;
+				client_sfx.startSound();
+			} else if (temperature < 100 && sfxPlaying) {
+				sfxPlaying = false;
+				client_sfx.stopSound();
+			}
+		}
+		if (collapsing > 0.666)
+			pullLocal();
+		for (DFCShock shock : dfcShocks) {
+			shock.ticks++;
+		}
+		while (!dfcShocks.isEmpty()) {
+			if (dfcShocks.get(0).ticks > 4)
+				dfcShocks.remove(0);
+			else break;
+		}
+		if (temperature > 100) {
+			if (client_type == Cores.ams_core_eyeofharmony) {
+				float r = (color>>16&255)/255F;
+				float g = (color>>8&255)/255F;
+				float b = (color&255)/255F;
+				float scale = (float) Math.log(temperature/50+1);
+				ParticleEyeOfHarmony fx = new ParticleEyeOfHarmony(world,pos,r,g,b,scale);
+				Minecraft.getMinecraft().effectRenderer.addEffect(fx);
+				angle = angle + lightRotateSpeed;
+				if (angle > 360)
+					angle -= 360;
+			}
+		}
+		ringSpinSpeed = 360/20f;
+		//if (120-collapsing*120 <= 15)
+		//	finalPhase = true;
+		if (collapsing > 0.95) {
+			double percent = (collapsing-0.95)/0.05;
+			ringSpinSpeed += 10800/20f*(float)percent;
+		}
+		if (finalPhase) {
+			ringAlpha = MathHelper.clamp(ringAlpha+0.025f,0,1);
+		}
+		ringAngle = MathHelper.positiveModulo(ringAngle+ringSpinSpeed,360);
+	}
+
 	public float ringSpinSpeed = 360/20f;
 	public float ringAngle = 0;
 	public float ringAlpha = 0;
@@ -1030,6 +1045,21 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 					if (!isPlayer || (isPlayer && !((EntityPlayer) e).capabilities.isCreativeMode))
 						e.attackEntityFrom(ModDamageSource.dfc, (int) (this.temperature / 100));
 					e.setFire(3);
+					if (collapsing > 0 && (isFixTool(e) || isSurvivalFixTool(e))) {
+						e.setEntityInvulnerable(false);
+						e.setDead();
+						world.createExplosion(null,pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5,20,false);
+						if (finalPhase || wasBoosted || isSurvivalFixTool(e) && world.rand.nextInt(100) < 80-lastStabilizers*10) {
+							world.playSound(null,pos,HBMSoundEvents.crucifix_fail,SoundCategory.BLOCKS,20,1);
+							continue;
+						}
+						temperature = 0;
+						containedEnergy = 0;
+						tanks[0].drain(1000000000,true);
+						tanks[1].drain(1000000000,true);
+						world.playSound(null,pos,HBMSoundEvents.crucifix,SoundCategory.BLOCKS,20,1);
+						continue;
+					}
 				}
 			}
 			if (isPlayer) {
@@ -1050,21 +1080,6 @@ public class TileEntityCore extends TileEntityMachineBase implements ITickable, 
 		List<Entity> list3 = world.getEntitiesWithinAABBExcludingEntity(null, new AxisAlignedBB(pos.getX()+0.4,pos.getY()+0.4,pos.getZ()+0.4,pos.getX()+0.6,pos.getY()+0.6,pos.getZ()+0.6));
 		if (collapsing > 0) {
 			for (Entity e : list3) {
-				if (isFixTool(e) || isSurvivalFixTool(e)) {
-					e.setEntityInvulnerable(false);
-					e.setDead();
-					world.createExplosion(null,pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5,20,false);
-					if (finalPhase || wasBoosted || isSurvivalFixTool(e) && world.rand.nextInt(100) < 80-lastStabilizers*10) {
-						world.playSound(null,pos,HBMSoundEvents.crucifix_fail,SoundCategory.BLOCKS,20,1);
-						continue;
-					}
-					temperature = 0;
-					containedEnergy = 0;
-					tanks[0].drain(1000000000,true);
-					tanks[1].drain(1000000000,true);
-					world.playSound(null,pos,HBMSoundEvents.crucifix,SoundCategory.BLOCKS,20,1);
-					continue;
-				}
 				e.attackEntityFrom(ModDamageSource.dfcMeltdown,(int) (this.temperature / 10));
 				//e.setFire(10);
 				if (!(e instanceof EntityLivingBase))

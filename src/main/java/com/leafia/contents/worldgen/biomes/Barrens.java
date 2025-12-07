@@ -26,7 +26,7 @@ public class Barrens extends ModBiome implements HasAcidicRain {
 	public GenLayer[] overrideGenLayers(long seed,GenLayer[] layers,int shaperIndex,int decoratorIndex,int shaperScale) {
 		NoiseGeneratorPerlin pawlin = new NoiseGeneratorPerlin(new Random(seed),2);
 		NoiseGeneratorPerlin fract = new NoiseGeneratorPerlin(new Random(seed),4);
-		int innerExponent = 3;
+		int innerExponent = 4; // originally 3. 5 seems a bit too much
 		int exponent = 7;
 		int exponentP = 1;
 		int radius = 1<<exponent-1;

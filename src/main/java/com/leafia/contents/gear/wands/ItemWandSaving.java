@@ -1,5 +1,6 @@
 package com.leafia.contents.gear.wands;
 
+import com.hbm.blocks.BlockDummyable;
 import com.hbm.items.ModItems;
 import com.hbm.main.ClientProxy;
 import com.hbm.main.MainRegistry;
@@ -262,6 +263,7 @@ public class ItemWandSaving extends Item {
 				int sz = size.getZ()+1;
 				LeafiaMap<Block,List<Block>> blocks = new LeafiaMap<>();
 				//List<byte[]> entities = new ArrayList<>();
+				// pair of SavingProperty and repetions
 				List<Pair<SavingProperty,Integer>> tiles = new ArrayList<>();
 				NBTTagList entities = new NBTTagList();
 				for (int i = 0; i < sx*sy*sz; i++) {
@@ -274,32 +276,41 @@ public class ItemWandSaving extends Item {
 					IBlockState state = world.getBlockState(pos);
 					property.state = state;
 
-					TileEntity entity = world.getTileEntity(pos);
-					if (entity != null) {
-						if (!entity.isInvalid()) {
-							NBTTagCompound tag = entity.serializeNBT();
-							entities.appendTag(tag);
-							property.entity = entities.tagCount()-1;
-							/*
-							ByteArrayOutputStream stream = new ByteArrayOutputStream(0);
-							try {
-								CompressedStreamTools.writeCompressed(tag,stream);
-								entities.add(stream.toByteArray());
-								property.entity = entities.size()-1;
-							} catch (IOException error) {
-								player.sendMessage(new TextWarningLeafia("TileEntity at "+pos.getX()+","+pos.getY()+","+pos.getZ()+" failed to save: "+error.getMessage()));
-							}*/
+					if (state.getBlock() instanceof BlockDummyable) {
+						if (state.getValue(BlockDummyable.META) < 12)
+							property.ignore = true;
+					}
+
+					if (!property.ignore) {
+						TileEntity entity = world.getTileEntity(pos);
+						if (entity != null) {
+							if (!entity.isInvalid()) {
+								NBTTagCompound tag = entity.serializeNBT();
+								entities.appendTag(tag);
+								property.entity = entities.tagCount()-1;
+								/*
+								ByteArrayOutputStream stream = new ByteArrayOutputStream(0);
+								try {
+									CompressedStreamTools.writeCompressed(tag,stream);
+									entities.add(stream.toByteArray());
+									property.entity = entities.size()-1;
+								} catch (IOException error) {
+									player.sendMessage(new TextWarningLeafia("TileEntity at "+pos.getX()+","+pos.getY()+","+pos.getZ()+" failed to save: "+error.getMessage()));
+								}*/
+							}
 						}
 					}
-					if (tiles.size() > 0) {
+					if (!tiles.isEmpty()) {
 						Pair<SavingProperty,Integer> pair = tiles.get(tiles.size()-1);
 						if (pair.getA().equals(property)) {
 							if (pair.getB() <= 8191) {
+								// add repetions if the block type matches
 								pair.setB(pair.getB()+1);
 								continue;
 							}
 						}
 					}
+					// or switch palette if it doesn't match
 					tiles.add(new Pair<>(property,1));
 					if (!blocks.containsKey(state.getBlock()))
 						blocks.put(state.getBlock(),new ArrayList<>());
@@ -370,7 +381,7 @@ public class ItemWandSaving extends Item {
 							if (!property.ignore) {
 								buf.writeShort(index);
 								if (meta != null)
-									buf.writeInt(meta);
+									buf.insert(meta,4);
 								if (property.entity != null)
 									buf.writeShort(property.entity);
 							}

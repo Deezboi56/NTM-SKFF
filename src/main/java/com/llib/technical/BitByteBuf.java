@@ -1,5 +1,6 @@
 package com.llib.technical;
 
+import com.llib.exceptions.LeafiaDevFlaw;
 import com.llib.math.range.RangeInt;
 
 public class BitByteBuf {
@@ -15,6 +16,7 @@ public class BitByteBuf {
 			bytes = newBytes;
 		}
 	}
+	int failsafeCount = 0;
 	public int extractBits(int start,int end) {
 		//System.out.println("Extracting");
 		int outValue = 0;
@@ -26,7 +28,11 @@ public class BitByteBuf {
 			int extract = bytepos < this.bytes.length ? bytes[bytes.length-1-bytepos]&0xFF : 0;
 			if (bytepos >= this.bytes.length) {
 				System.out.println("SERIOUS WARNING: Attempt to extract byte "+bytepos+", outside range 0 ~ "+(bytes.length-1)+"!");
-			}
+				failsafeCount++;
+				if (failsafeCount > 50)
+					throw new LeafiaDevFlaw("BitByteBuf: Attempt to extract byte "+bytepos+", outside range 0 ~ "+(bytes.length-1)+"!");
+			} else
+				failsafeCount = 0;
 			if (bytepos == indexRange.max)
 				extract = extract&filter;
 			//System.out.println("FILTER: "+Integer.toBinaryString(filter));

@@ -69,4 +69,6 @@ dependencies {
 
     runtimeOnlyNonPublishable rfg.deobf(files("../Backups-1.12.2-1.5.7.jar"))
 
+    runtimeOnlyNonPublishable rfg.deobf(files("../NaturesCompass-1.12.2-1.8.5.jar"))
+
 }

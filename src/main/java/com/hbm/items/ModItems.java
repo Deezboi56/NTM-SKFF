@@ -48,6 +48,7 @@ import com.hbm.main.MainRegistry;
 import com.hbm.potion.HbmPotion;
 import com.hbm.tileentity.machine.rbmk.IRBMKFluxReceiver.NType;
 import com.hbm.util.EnchantmentUtil;
+import com.leafia.contents.building.linedasphalt.LinedAsphaltBlock;
 import com.leafia.dev.hazards.ItemRads;
 import com.leafia.contents.control.fuel.nuclearfuel.LeafiaRodItem;
 import com.leafia.contents.gear.ItemGasSensor;
@@ -3785,7 +3786,8 @@ public class ModItems {
 				ForgeRegistries.ITEMS.register(new ItemBlockHazard(block).setRegistryName(block.getRegistryName()));
 			} else if(block == ModBlocks.block_scrap){
 				ForgeRegistries.ITEMS.register(new ItemBlockScrap(block).setRegistryName(block.getRegistryName()));
-			} else if(block instanceof BlockModDoor){
+			} else if(block instanceof BlockModDoor) {
+			} else if(block instanceof LinedAsphaltBlock) {
 			} else {
 				ForgeRegistries.ITEMS.register(new ItemBlock(block).setRegistryName(block.getRegistryName()));
 			}

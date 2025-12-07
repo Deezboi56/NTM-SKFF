@@ -4,6 +4,9 @@ import com.hbm.items.ModItems;
 import com.hbm.util.I18nUtil;
 import com.hbm.world.*;
 import com.leafia.contents.worldgen.NTMStructBuffer;
+import com.leafia.contents.worldgen.NTMStructBuffer.StructData;
+import com.leafia.contents.worldgen.NTMStructBuffer.StructLoader;
+import com.leafia.dev.LeafiaDebug;
 import com.leafia.dev.custompacket.LeafiaCustomPacket;
 import com.leafia.dev.custompacket.LeafiaCustomPacketEncoder;
 import com.leafia.dev.optimization.bitbyte.LeafiaBuf;
@@ -118,9 +121,15 @@ public class ItemWandS extends Item {
 				default:
 					if (stack.getTagCompound().hasKey("filename")) {
 						String path = "ntmstructs/"+stack.getTagCompound().getString("filename");
-						if (!Files.exists(Paths.get(path)))
-							player.sendMessage(new TextWarningLeafia("Structure "+path+" doesn't exist in your file system!"));
-						else {
+						if (!Files.exists(Paths.get(path))) {
+							System.out.println("cant find from local folder");
+							StructData data = StructLoader.structs.get(stack.getTagCompound().getString("filename"));
+							if (data != null) {
+								System.out.println("from resources");
+								NTMStructBuffer.fromMetadata(data).rotateToFace(player.getHorizontalFacing()).build(world,pos.offset(facing));
+							} else
+								player.sendMessage(new TextWarningLeafia("Structure "+path+" doesn't exist in the server file system!"));
+						} else {
 							NTMStructBuffer.fromFiles(path).rotateToFace(player.getHorizontalFacing()).build(world,pos.offset(facing));
 						}
 					}
@@ -137,14 +146,14 @@ public class ItemWandS extends Item {
 		@Override
 		public void encode(LeafiaBuf buf) {
 			buf.writeInt(index);
-			if (index < 0)
+			if (index < 0 || index > ItemWandS.maxShit)
 				buf.writeUTF8String(name);
 		}
 		@Nullable
 		@Override
 		public Consumer<MessageContext> decode(LeafiaBuf buf) {
 			index = buf.readInt();
-			if (index < 0)
+			if (index < 0 || index > maxShit)
 				name = buf.readUTF8String();
 			return (ctx)->{
 				ItemStack stack = ctx.getServerHandler().player.getHeldItemMainhand();
@@ -161,10 +170,13 @@ public class ItemWandS extends Item {
 					nbt.setString("filename",name);
 				else
 					nbt.removeTag("filename");
+				LeafiaDebug.debugLog(ctx.getServerHandler().player.world,"BUILDING: "+index);
+				LeafiaDebug.debugLog(ctx.getServerHandler().player.world,"FILENAME: "+name);
 				stack.setTagCompound(nbt);
 			};
 		}
 	}
+	static final int maxShit = 5;
 	@Override
 	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand handIn) {
 		if(player.isSneaking())
@@ -181,7 +193,8 @@ public class ItemWandS extends Item {
 						index++;
 				}
 				String filename = null;
-				if (index > 5 || index < 0) {
+				String displayName = null;
+				if (index > maxShit+StructLoader.structs.size() || index < 0) {
 					if (index > 0)
 						index = -1;
 					List<String> structs = new ArrayList<>();
@@ -196,11 +209,18 @@ public class ItemWandS extends Item {
 							}
 						}
 					}
-					if (-index-1 < structs.size())
+					if (-index-1 < structs.size()) {
 						filename = structs.get(-index-1);
-					else
+						displayName = filename;
+					} else
 						index = 0;
+				} else if (index > maxShit) {
+					List<String> structKeys = new ArrayList<>(StructLoader.structs.keySet());
+					filename = structKeys.get(index-maxShit-1);
+					displayName = StructLoader.structs.get(filename).getName();
 				}
+				LeafiaDebug.debugLog(world,"INDEX: "+index);
+				LeafiaDebug.debugLog(world,"FILENAME: "+filename);
 				WandStructurePacket packet = new WandStructurePacket();
 				if (filename != null)
 					packet.name = filename;
@@ -227,7 +247,7 @@ public class ItemWandS extends Item {
 						player.sendMessage(new TextComponentTranslation("chat.structurewand.set.safe"));
 						break;
 					default:
-						player.sendMessage(new TextComponentTranslation("chat.structurewand.set",filename));
+						player.sendMessage(new TextComponentTranslation("chat.structurewand.set",displayName));
 						break;
 				}
 			}
