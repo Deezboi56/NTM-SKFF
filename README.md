@@ -1,5 +1,5 @@
-#Leafia Cursed NTM -SKFF edition
-##"A fork doesn't die until all it's subforks are dead."- Me, at 22:44 on a random Sunday night
+# Leafia Cursed NTM -SKFF edition
+## "A fork doesn't die until all it's subforks are dead."- Me, at 22:44 on a random Sunday night
 Basically this fork exists because i was angry that the main thing was considered "dead"
 Expect nothing of this.
 
